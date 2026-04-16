@@ -156,6 +156,13 @@ export class InMemoryPaymentsEngine implements PaymentsEngine {
   }
 
   createPayouts(input: MatchSettlementInput): PayoutLedgerRecord[] {
+    const existingPayouts = Array.from(this.payouts.values()).filter(
+      (record) => record.matchId === input.result.matchId && record.escrowId === input.escrowId,
+    );
+    if (existingPayouts.length > 0) {
+      return existingPayouts.sort((left, right) => left.payoutId.localeCompare(right.payoutId));
+    }
+
     const nowIso = this.clock.nowIso();
     const escrow = this.requireEscrow(input.escrowId);
     const settlementStrategy = input.strategy ?? "winners_equally";

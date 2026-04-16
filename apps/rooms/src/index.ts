@@ -3,10 +3,12 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { ClientMessage, GameKey, SeatBackingType } from "@arena/contracts";
 
 import { isAutomationCandidate, processAutomatedTurns } from "./automation.js";
+import { createMatchSyncService } from "./match-sync.js";
 import { InMemoryRoomRuntime } from "./runtime.js";
 
 const port = Number(process.env.PORT ?? 4011);
 const runtime = new InMemoryRoomRuntime();
+const matchSync = createMatchSyncService();
 
 const readJsonBody = async (request: IncomingMessage) => {
   const chunks: Buffer[] = [];
@@ -60,11 +62,13 @@ const server = createServer(async (request, response) => {
   }
 
   if (request.method === "GET" && url.pathname === "/rooms") {
+    await syncCompletedRooms();
     writeJson(response, 200, runtime.listRooms());
     return;
   }
 
   if (request.method === "GET" && roomMatch) {
+    await matchSync.syncCompletedRoomIfNeeded(runtime, roomMatch[1] ?? "");
     const room = runtime.getPublicRoomState(roomMatch[1] ?? "");
     if (!room) {
       writeError(response, 404, "room_not_found", "Room does not exist.");
@@ -89,7 +93,7 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-  if (request.method === "POST" && url.pathname === "/rooms/bootstrap") {
+    if (request.method === "POST" && url.pathname === "/rooms/bootstrap") {
     const body = (await readJsonBody(request)) as {
       game?: GameKey;
       publicState?: Record<string, unknown>;
@@ -115,6 +119,8 @@ const server = createServer(async (request, response) => {
       await processAutomatedTurns(runtime, room.roomId);
     }
 
+    await matchSync.syncCompletedRoomIfNeeded(runtime, room.roomId);
+
     writeJson(response, 201, runtime.getPublicRoomState(room.roomId));
     return;
   }
@@ -136,6 +142,7 @@ const server = createServer(async (request, response) => {
       if (isAutomationCandidate(runtime.getRoom(roomId))) {
         await processAutomatedTurns(runtime, roomId);
       }
+      await matchSync.syncCompletedRoomIfNeeded(runtime, roomId);
       writeJson(response, 200, room);
     } catch (error) {
       writeError(
@@ -165,6 +172,7 @@ const server = createServer(async (request, response) => {
       if (isAutomationCandidate(runtime.getRoom(roomId))) {
         await processAutomatedTurns(runtime, roomId);
       }
+      await matchSync.syncCompletedRoomIfNeeded(runtime, roomId);
       writeJson(response, 200, room);
     } catch (error) {
       writeError(
@@ -190,6 +198,7 @@ const server = createServer(async (request, response) => {
       if (isAutomationCandidate(runtime.getRoom(roomId))) {
         await processAutomatedTurns(runtime, roomId);
       }
+      await matchSync.syncCompletedRoomIfNeeded(runtime, roomId);
       writeJson(response, 200, room);
     } catch (error) {
       writeError(
@@ -208,3 +217,12 @@ const server = createServer(async (request, response) => {
 server.listen(port, () => {
   console.log(`@arena/rooms listening on http://localhost:${port}`);
 });
+
+async function syncCompletedRooms(): Promise<void> {
+  const jobs = runtime
+    .listRooms()
+    .filter((room) => room.phase === "results")
+    .map((room) => matchSync.syncCompletedRoomIfNeeded(runtime, room.roomId));
+
+  await Promise.all(jobs);
+}

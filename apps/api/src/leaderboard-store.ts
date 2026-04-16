@@ -8,11 +8,19 @@ import {
 } from "@arena/leaderboard";
 
 const leaderboardEngine = createLeaderboardEngine();
+const appliedMatches = new Map<string, LeaderboardApplyResult>();
 
 export function applyResolvedLeaderboardMatch(
   match: ResolvedLeaderboardMatch,
 ): LeaderboardApplyResult {
-  return leaderboardEngine.applyMatch(match);
+  const existing = appliedMatches.get(match.result.matchId);
+  if (existing) {
+    return existing;
+  }
+
+  const applied = leaderboardEngine.applyMatch(match);
+  appliedMatches.set(match.result.matchId, applied);
+  return applied;
 }
 
 export function getLeaderboardSnapshot(

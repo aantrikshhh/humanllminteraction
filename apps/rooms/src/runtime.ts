@@ -40,6 +40,14 @@ export interface CreateRoomInput<TPublicState = Record<string, unknown>> {
   round?: number;
 }
 
+export interface MatchSyncState {
+  status: "pending" | "syncing" | "synced" | "failed";
+  attempts: number;
+  lastAttemptAt?: string;
+  syncedAt?: string;
+  lastError?: string;
+}
+
 export interface RoomRecord<TPublicState = unknown, TGameState = unknown> {
   roomId: RoomId;
   matchId: string;
@@ -53,6 +61,8 @@ export interface RoomRecord<TPublicState = unknown, TGameState = unknown> {
   updatedAt: string;
   replay: ReplayEvent[];
   result?: MatchResult;
+  paymentsEscrowId?: string;
+  matchSync: MatchSyncState;
 }
 
 type RuntimeGameModule = GameModule<unknown, unknown, unknown>;
@@ -98,6 +108,10 @@ export class InMemoryRoomRuntime {
       createdAt: nowIso,
       updatedAt: nowIso,
       replay: [],
+      matchSync: {
+        status: "pending",
+        attempts: 0,
+      },
     };
 
     this.rooms.set(roomId, room as RoomRecord);
@@ -261,6 +275,22 @@ export class InMemoryRoomRuntime {
     };
   }
 
+  updateMatchSync(
+    roomId: RoomId,
+    updater: (current: MatchSyncState) => MatchSyncState,
+  ): MatchSyncState {
+    const room = this.requireRoom(roomId);
+    room.matchSync = updater(room.matchSync);
+    room.updatedAt = this.now();
+    return room.matchSync;
+  }
+
+  setPaymentsEscrowId(roomId: RoomId, escrowId: string): void {
+    const room = this.requireRoom(roomId);
+    room.paymentsEscrowId = escrowId;
+    room.updatedAt = this.now();
+  }
+
   private initializeGameState<TPublicState>(
     game: GameKey,
     seed: string,
@@ -401,7 +431,7 @@ export class InMemoryRoomRuntime {
 
     const privateSeat: PrivateSeatMetadata = {
       seatId,
-      playerId: seat.playerId,
+      playerId: seat.playerId ?? deriveSeatPlayerId(seat, index),
       backingType: seat.backingType,
       llmModelId: seat.llmModelId,
       promptVersionId: seat.promptVersionId,
@@ -441,6 +471,25 @@ export class InMemoryRoomRuntime {
 
     return seat;
   }
+}
+
+function deriveSeatPlayerId(seat: CreateSeatInput, index: number): string {
+  const base =
+    seat.playerId ??
+    seat.llmModelId ??
+    seat.displayName ??
+    `${seat.backingType}-${index + 1}`;
+
+  return `${seat.backingType}:${slugify(base)}:${index + 1}`;
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "seat";
 }
 
 function deriveRoomCounter(publicState: unknown): number {
