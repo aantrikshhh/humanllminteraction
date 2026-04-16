@@ -1,11 +1,11 @@
 import Link from "next/link";
 
+import LobbyRoomConsole from "./LobbyRoomConsole";
 import {
   formatUsd,
   getLeaderboardSnapshot,
   getPaymentsSnapshot,
   getRoomsSnapshot,
-  labelGame,
 } from "../../../lib/service-data";
 
 export const dynamic = "force-dynamic";
@@ -58,69 +58,7 @@ export default async function LobbyPage() {
 
         <div className="dashboard-grid">
           <section className="workspace">
-            <div className="stack">
-              <div className="section-row">
-                <div>
-                  <h2>Active Rooms</h2>
-                  <p className="muted">
-                    Source: <code>{roomsSnapshot.baseUrl}</code>
-                  </p>
-                </div>
-                <Link className="button" href="/games/auction">
-                  Open flagship game
-                </Link>
-              </div>
-
-              <div className="card-grid">
-                {roomsSnapshot.data.map((room) => {
-                  const readySeats = room.seats.filter((seat) => seat.isReady).length;
-                  const connectedSeats = room.seats.filter((seat) => seat.isConnected).length;
-
-                  return (
-                    <article className="panel tile-card" key={room.roomId}>
-                      <div className="tile-topline">
-                        <span className="pill accent">{labelGame(room.game)}</span>
-                        <span className="pill subtle">{room.phase}</span>
-                      </div>
-                      <h3>{labelGame(room.game)} room</h3>
-                      <p className="muted">
-                        Match <code>{room.matchId.slice(0, 8)}</code> · round {room.round}
-                      </p>
-                      <div className="metric-grid">
-                        <div className="metric">
-                          <span>Connected</span>
-                          <strong>
-                            {connectedSeats}/{room.seats.length}
-                          </strong>
-                        </div>
-                        <div className="metric">
-                          <span>Ready</span>
-                          <strong>
-                            {readySeats}/{room.seats.length}
-                          </strong>
-                        </div>
-                      </div>
-                      <div className="seat-column">
-                        {room.seats.map((seat) => (
-                          <div className="seat-line" key={seat.seatId}>
-                            <div>
-                              <strong>{seat.displayName}</strong>
-                              <span>Hidden identity</span>
-                            </div>
-                            <span className={`pill ${seat.isReady ? "accent" : "subtle"}`}>
-                              {seat.isReady ? "Ready" : "Pending"}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <Link className="button primary" href={`/games/${room.game}`}>
-                        Review rules
-                      </Link>
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
+            <LobbyRoomConsole initialRooms={roomsSnapshot.data} />
           </section>
 
           <aside className="sidebar sidebar-wide">

@@ -396,7 +396,7 @@ export class InMemoryRoomRuntime {
       displayName: seat.displayName,
       avatarId: seat.avatarId,
       isConnected: seat.backingType !== "human",
-      isReady: false,
+      isReady: seat.backingType !== "human",
     };
 
     const privateSeat: PrivateSeatMetadata = {
