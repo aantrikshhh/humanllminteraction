@@ -1,6 +1,7 @@
 import {
   AgentRuntimeRegistry,
   DeterministicFakeAgentAdapter,
+  OpenAIResponsesAgentAdapter,
 } from "@arena/agents";
 import {
   AUCTION_MAX_BID,
@@ -17,13 +18,18 @@ import type { PrivateSeatMetadata, SeatAssignment, SeatId } from "@arena/contrac
 import type { RoomRecord } from "./runtime.js";
 import { InMemoryRoomRuntime } from "./runtime.js";
 
+const deterministicAdapter = new DeterministicFakeAgentAdapter({
+  id: "arena-deterministic-fake",
+  supportedGames: ["auction", "split", "pact", "vault", "settlement"],
+  defaultModelId: "arena-deterministic-fake",
+  defaultPromptVersionId: "arena-fake-v1",
+});
+
+const liveOpenAiAdapter = createOpenAiAdapter();
+
 const registry = new AgentRuntimeRegistry({
-  fallbackAdapter: new DeterministicFakeAgentAdapter({
-    id: "arena-deterministic-fake",
-    supportedGames: ["auction", "split", "pact", "vault", "settlement"],
-    defaultModelId: "arena-deterministic-fake",
-    defaultPromptVersionId: "arena-fake-v1",
-  }),
+  adapters: liveOpenAiAdapter ? [liveOpenAiAdapter] : [],
+  fallbackAdapter: deterministicAdapter,
 });
 
 type AutomationPlan =
@@ -373,6 +379,7 @@ function requestAutomatedMove(
   privateSeat: PrivateSeatMetadata,
 ) {
   const deadlineIso = new Date(Date.now() + 5_000).toISOString();
+  const adapterId = resolveAdapterId(privateSeat);
 
   switch (plan.game) {
     case "auction":
@@ -383,7 +390,7 @@ function requestAutomatedMove(
         privateSeat,
         availableActions: plan.availableActions,
         deadlineIso,
-      });
+      }, { adapterId });
     case "split":
       return registry.requestMove({
         game: plan.game,
@@ -392,7 +399,7 @@ function requestAutomatedMove(
         privateSeat,
         availableActions: plan.availableActions,
         deadlineIso,
-      });
+      }, { adapterId });
     case "pact":
       return registry.requestMove({
         game: plan.game,
@@ -401,7 +408,7 @@ function requestAutomatedMove(
         privateSeat,
         availableActions: plan.availableActions,
         deadlineIso,
-      });
+      }, { adapterId });
     case "vault":
       return registry.requestMove({
         game: plan.game,
@@ -410,7 +417,7 @@ function requestAutomatedMove(
         privateSeat,
         availableActions: plan.availableActions,
         deadlineIso,
-      });
+      }, { adapterId });
     case "settlement":
       return registry.requestMove({
         game: plan.game,
@@ -419,8 +426,50 @@ function requestAutomatedMove(
         privateSeat,
         availableActions: plan.availableActions,
         deadlineIso,
-      });
+      }, { adapterId });
     default:
       throw new Error("Unsupported automation game plan");
   }
+}
+
+function createOpenAiAdapter() {
+  if (!process.env.OPENAI_API_KEY?.trim()) {
+    return null;
+  }
+
+  try {
+    return new OpenAIResponsesAgentAdapter({
+      id: "arena-openai-live",
+      supportedGames: ["auction", "split", "pact", "vault", "settlement"],
+      defaultPromptVersionId: "arena-openai-v1",
+      reasoningEffort: normalizeReasoningEffort(process.env.OPENAI_REASONING_EFFORT),
+    });
+  } catch {
+    return null;
+  }
+}
+
+function resolveAdapterId(privateSeat: PrivateSeatMetadata): string | undefined {
+  if (privateSeat.backingType === "llm" && liveOpenAiAdapter) {
+    return liveOpenAiAdapter.id;
+  }
+
+  if (privateSeat.backingType === "scripted") {
+    return deterministicAdapter.id;
+  }
+
+  return undefined;
+}
+
+function normalizeReasoningEffort(value: string | undefined) {
+  if (!value) {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "low" || normalized === "medium" || normalized === "high" || normalized === "xhigh") {
+    return normalized;
+  }
+
+  return undefined;
 }

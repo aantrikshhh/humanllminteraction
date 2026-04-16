@@ -34,13 +34,13 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
         <section className={`hero-band ${styles.heroBand}`}>
           <div className="stack">
-            <div className="eyebrow">Live Room</div>
+            <div className="eyebrow">Identity-Blind Multiplayer</div>
             <h1 className="section-title">
-              {roomSnapshot.data ? `${labelGame(roomSnapshot.data.game)} room` : "Room offline"}
+              {roomSnapshot.data ? `${labelGame(roomSnapshot.data.game)} live room` : "Room offline"}
             </h1>
             <p className="muted section-copy">
-              Join from this page, claim an open mask, ready up, and act when your turn goes live.
-              Occupied seats stay identity-blinded throughout the room.
+              Claim a mask, ready the seat, and play the room from here. The live stage stays
+              readable, while diagnostics sit behind the inspector.
             </p>
           </div>
           <div className="service-stack">
@@ -48,13 +48,15 @@ export default async function RoomPage({ params }: RoomPageProps) {
               <span>Room ID</span>
               <strong>{roomId.slice(0, 16)}</strong>
             </div>
+            {roomSnapshot.data ? (
+              <div className="service-pill">
+                <span>Status</span>
+                <strong>{roomSnapshot.data.phase}</strong>
+              </div>
+            ) : null}
             <div className="service-pill">
               <span>Source</span>
               <strong>{roomSnapshot.source}</strong>
-            </div>
-            <div className="service-pill">
-              <span>Endpoint</span>
-              <strong>{roomSnapshot.baseUrl.replace(/^https?:\/\//, "")}</strong>
             </div>
           </div>
         </section>
@@ -66,8 +68,8 @@ export default async function RoomPage({ params }: RoomPageProps) {
                 <div>
                   <h2>Room loop</h2>
                   <p className="muted">
-                    Stay inside the live stage, then move directly into the public result, rankings,
-                    or payout surface once the room settles.
+                    Stay inside the live stage, then move directly into results, rankings, or the
+                    payout stub once the match settles.
                   </p>
                 </div>
                 <div className="inline-actions">

@@ -523,6 +523,11 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
       ? "Your browser holds one mask in this room. Identity stays hidden for every other seat."
       : "You are inside the room. Claim one open mask to participate."
     : "Join with a short display name, then claim one open mask without revealing who else is human.";
+  const stageMetrics = buildStageMetrics(room, openSeatCount, ownedSeat);
+  const focusTitle = describePrimaryInstruction(room, {
+    hasSession: Boolean(session),
+    ownedSeatId: ownedSeat?.seatId,
+  });
 
   return (
     <div className={styles.pageStack}>
@@ -578,20 +583,46 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
 
             <div className={styles.posterTop}>
               <div>
-                <div className={styles.posterLabel}>Current stage</div>
-                <div className={styles.posterValue}>
-                  {room.phase === "results" ? "Match settled" : `${labelGame(room.game)} live room`}
-                </div>
+                <div className={styles.posterLabel}>Live stage</div>
+                <div className={styles.posterValue}>{focusTitle}</div>
               </div>
               <div className={styles.posterMeta}>
-                <span>Open masks</span>
-                <strong>{openSeatCount}</strong>
+                <span>Next route</span>
+                <strong>{room.phase === "results" ? "Results" : "Play"}</strong>
               </div>
             </div>
 
-            <div className={styles.genericBand}>
-              <strong>{describePosterState(room, ownedSeat?.seatId)}</strong>
-              <p className="muted">{describePosterSubcopy(room, ownedSeat?.seatId)}</p>
+            <div className={styles.focusGrid}>
+              <article className={styles.focusCard}>
+                <span className={styles.focusEyebrow}>Now</span>
+                <strong className={styles.focusHeadline}>{describeActionStatus(room, ownedSeat?.seatId)}</strong>
+                <p className="muted">{describePosterState(room, ownedSeat?.seatId)}</p>
+              </article>
+
+              <article className={styles.visibilityCard}>
+                <span className={styles.focusEyebrow}>Visibility</span>
+                <strong className={styles.focusHeadline}>Public play, hidden identity</strong>
+                <p className="muted">{describePosterSubcopy(room, ownedSeat?.seatId)}</p>
+              </article>
+            </div>
+
+            <div className={styles.summaryBand}>
+              {stageMetrics.map((metric) => (
+                <div className={styles.summaryMetric} key={metric.label}>
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                </div>
+              ))}
+            </div>
+
+            <div className={styles.seatHeader}>
+              <div>
+                <span className={styles.posterLabel}>Masks on stage</span>
+                <p className="muted">
+                  Open masks are claimable. Occupied masks stay blinded even after a browser joins.
+                </p>
+              </div>
+              <span className="pill subtle">{openSeatCount} open</span>
             </div>
 
             <div className={styles.seatStage}>
@@ -604,7 +635,14 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
 
                 return (
                   <article
-                    className={styles.seatCard}
+                    className={[
+                      styles.seatCard,
+                      isOwned ? styles.seatCardOwned : "",
+                      isCurrentTurn ? styles.seatCardCurrent : "",
+                      isOpen ? styles.seatCardOpen : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     key={seat.seatId}
                     style={
                       {
@@ -664,7 +702,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
         </div>
 
         <aside className={styles.sidebarStack}>
-          <section className="panel">
+          <section className={`panel ${styles.controlDock}`}>
             <div className="stack">
               <div className="section-row">
                 <div>
@@ -754,10 +792,10 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
             </div>
           </section>
 
-          <section className="panel">
+          <section className={`panel ${styles.controlDock}`}>
             <div className="stack">
               <div>
-                <h2>{labelGame(room.game)} controls</h2>
+                <h2>Action rail</h2>
                 <p className="muted">{describeControlsCopy(room)}</p>
               </div>
 
@@ -1042,9 +1080,42 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
             </div>
           </section>
 
-          <section className="panel">
+          <section className={`panel panel-subtle ${styles.nextPanel}`}>
             <div className="stack">
-              <h2>Room telemetry</h2>
+              <div>
+                <span className={styles.focusEyebrow}>After the room</span>
+                <h2 className={styles.nextTitle}>
+                  {room.phase === "results" ? "Move into the public readout." : "Keep the next step one click away."}
+                </h2>
+                <p className="muted">
+                  Results, leaderboard movement, and payout stubs are connected already. The inspector stays here only
+                  when you need to audit the live state.
+                </p>
+              </div>
+              <div className={styles.quickLinkRail}>
+                <Link className="button primary" href={`/results/${room.roomId}`}>
+                  {room.phase === "results" ? "Open result" : "Result view"}
+                </Link>
+                <Link className="button" href="/leaderboard">
+                  Leaderboard
+                </Link>
+                <Link className="button" href="/payments">
+                  Payments
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          <details className={styles.inspector}>
+            <summary className={styles.inspectorSummary}>
+              <div>
+                <span className={styles.focusEyebrow}>Inspector</span>
+                <strong className={styles.inspectorTitle}>Live telemetry and public state</strong>
+              </div>
+              <span className="pill subtle">advanced</span>
+            </summary>
+
+            <div className={styles.inspectorBody}>
               <div className={styles.telemetryList}>
                 <div className={styles.telemetryRow}>
                   <span>Game</span>
@@ -1069,7 +1140,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                 <pre>{JSON.stringify(room.publicState, null, 2)}</pre>
               </div>
             </div>
-          </section>
+          </details>
         </aside>
       </section>
     </div>
@@ -1199,4 +1270,74 @@ function describeActionStatus(room: PublicRoomState, ownedSeatId?: string): stri
   }
 
   return "Waiting on the room.";
+}
+
+function describePrimaryInstruction(
+  room: PublicRoomState,
+  options: { hasSession: boolean; ownedSeatId?: string },
+): string {
+  if (!options.hasSession) {
+    return "Join the room to take a mask.";
+  }
+
+  if (!options.ownedSeatId) {
+    return "Claim one open mask to enter the match.";
+  }
+
+  if (room.phase === "results") {
+    return "The room is settled.";
+  }
+
+  return describeActionStatus(room, options.ownedSeatId);
+}
+
+function buildStageMetrics(
+  room: PublicRoomState,
+  openSeatCount: number,
+  ownedSeat: PublicSeatView | null,
+): Array<{ label: string; value: string }> {
+  return [
+    {
+      label: "Phase",
+      value: room.phase.replace(/_/g, " "),
+    },
+    {
+      label: "Round",
+      value: String(room.round),
+    },
+    {
+      label: ownedSeat ? "Your mask" : "Open masks",
+      value: ownedSeat ? ownedSeat.displayName : String(openSeatCount),
+    },
+    {
+      label: "Live pulse",
+      value: describeLivePulse(room),
+    },
+  ];
+}
+
+function describeLivePulse(room: PublicRoomState): string {
+  if (isAuctionRoom(room)) {
+    return `${room.publicState.currentBid} bid`;
+  }
+
+  if (isSplitRoom(room)) {
+    return room.publicState.phase;
+  }
+
+  if (isPactRoom(room)) {
+    return `${room.publicState.commitmentCount}/2 locked`;
+  }
+
+  if (isVaultRoom(room)) {
+    return room.publicState.phase === "contribution_window"
+      ? `${room.publicState.contributionStatus.submitted}/${room.publicState.contributionStatus.total} in`
+      : `${room.publicState.accusationStatus.submitted}/${room.publicState.accusationStatus.total} accuse`;
+  }
+
+  if (isSettlementRoom(room)) {
+    return room.publicState.currentTurnSeatId ?? room.publicState.phase;
+  }
+
+  return labelGame(room.game);
 }

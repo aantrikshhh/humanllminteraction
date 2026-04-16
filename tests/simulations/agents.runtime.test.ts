@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   AgentRuntimeRegistry,
   DeterministicFakeAgentAdapter,
+  OpenAIResponsesAgentAdapter,
   normalizeAgentRuntimePolicy,
 } from "../../packages/agents/src/index.ts";
 
@@ -57,7 +58,7 @@ test("DeterministicFakeAgentAdapter chooses the same action for the same request
       { type: "pass" },
       { type: "bid", amount: 25 },
     ],
-    deadlineIso: "2026-04-16T10:00:00.000Z",
+    deadlineIso: "2099-04-16T10:00:00.000Z",
   };
 
   const first = await adapter.requestMove(request, normalizeAgentRuntimePolicy());
@@ -131,7 +132,7 @@ test("AgentRuntimeRegistry exposes catalog metadata and fills prompt and timing 
         { type: "bid", amount: 10 },
         { type: "pass" },
       ],
-      deadlineIso: "2026-04-16T10:00:00.000Z",
+      deadlineIso: "2099-04-16T10:00:00.000Z",
     },
     {
       adapterId: "auction-primary",
@@ -171,7 +172,7 @@ test("AgentRuntimeRegistry falls back to a deterministic adapter after timeout",
         { type: "bid", amount: 10 },
         { type: "pass" },
       ],
-      deadlineIso: "2026-04-16T10:00:00.000Z",
+      deadlineIso: "2099-04-16T10:00:00.000Z",
     },
     {
       policy: {
@@ -222,7 +223,7 @@ test("AgentRuntimeRegistry falls back when an adapter returns an invalid action"
         { type: "bid", amount: 10 },
         { type: "pass" },
       ],
-      deadlineIso: "2026-04-16T10:00:00.000Z",
+      deadlineIso: "2099-04-16T10:00:00.000Z",
     },
     {
       policy: {
@@ -305,4 +306,42 @@ test("AgentRuntimeRegistry clamps think time to the request deadline", async () 
   assert.ok(outcome.targetThinkTimeMs <= 40);
   assert.ok(outcome.actualThinkTimeMs <= 40);
   assert.equal(outcome.timedOut, false);
+});
+
+test("OpenAIResponsesAgentAdapter maps structured response output to a legal action", async () => {
+  const adapter = new OpenAIResponsesAgentAdapter({
+    apiKey: "test-key",
+    defaultModel: "gpt-4.1-mini",
+    fetchImpl: async () =>
+      new Response(
+        JSON.stringify({
+          output_text: "{\"actionIndex\":1}",
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      ),
+  });
+
+  const result = await adapter.requestMove(
+    {
+      game: "auction",
+      seatId: seat.seatId,
+      publicState,
+      privateSeat,
+      availableActions: [
+        { type: "bid", amount: 10 },
+        { type: "pass" },
+      ],
+      deadlineIso: "2099-04-16T10:00:00.000Z",
+    },
+    normalizeAgentRuntimePolicy({
+      minThinkTimeMs: 0,
+      maxThinkTimeMs: 0,
+    }),
+  );
+
+  assert.deepEqual(result.action, { type: "pass" });
+  assert.equal(result.modelId, "gpt-4.1-mini");
 });

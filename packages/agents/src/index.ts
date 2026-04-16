@@ -36,6 +36,7 @@ export {
 } from "./runtime";
 
 export { DeterministicFakeAgentAdapter } from "./fake-adapter";
+export { OpenAIResponsesAgentAdapter } from "./openai-adapter";
 
 export const CURATED_REPO_SKILLS = [
   "aspnet-core",

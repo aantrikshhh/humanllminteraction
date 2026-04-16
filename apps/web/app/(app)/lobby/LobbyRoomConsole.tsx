@@ -8,14 +8,17 @@ import type { GameKey, PublicRoomState, SeatBackingType } from "@arena/contracts
 import { type AuctionPublicState } from "@arena/game-auction";
 
 import { labelGame } from "../../../lib/service-data";
+import styles from "./lobby.module.css";
 
 interface LobbyRoomConsoleProps {
   initialRooms: PublicRoomState[];
 }
 
 interface CreateRoomTemplate {
+  id: string;
   game: GameKey;
   title: string;
+  icon: string;
   strap: string;
   detail: string;
   players: string;
@@ -33,8 +36,10 @@ interface CreateRoomTemplate {
 
 const roomTemplates: CreateRoomTemplate[] = [
   {
+    id: "auction-solo",
     game: "auction",
     title: "Auction Solo",
+    icon: "◐",
     strap: "Fast bluffing pressure",
     detail: "One human bidder enters a four-seat auction against three hidden rivals for the fastest solo demo path.",
     players: "1 human + 3 hidden agents",
@@ -65,8 +70,10 @@ const roomTemplates: CreateRoomTemplate[] = [
     },
   },
   {
+    id: "auction-live",
     game: "auction",
     title: "Auction Live",
+    icon: "◈",
     strap: "Two humans, two hidden seats",
     detail: "The strongest on-camera multiplayer demo: two claimed human masks inside a four-seat hidden-identity auction.",
     players: "2 humans + 2 hidden agents",
@@ -91,8 +98,10 @@ const roomTemplates: CreateRoomTemplate[] = [
     },
   },
   {
+    id: "split",
     game: "split",
     title: "Split",
+    icon: "⟂",
     strap: "One offer, one answer",
     detail: "Claim a single mask and negotiate against one hidden counterpart.",
     players: "1 human + 1 hidden agent",
@@ -111,8 +120,10 @@ const roomTemplates: CreateRoomTemplate[] = [
     },
   },
   {
+    id: "pact",
     game: "pact",
     title: "Pact",
+    icon: "✦",
     strap: "Repeated trust loop",
     detail: "Fifteen hidden commitment rounds against one unknown rival.",
     players: "1 human + 1 hidden agent",
@@ -131,8 +142,10 @@ const roomTemplates: CreateRoomTemplate[] = [
     },
   },
   {
+    id: "vault",
     game: "vault",
     title: "Vault",
+    icon: "◫",
     strap: "Public goods with accusations",
     detail: "Contribute, then accuse. Three hidden seats pressure every round.",
     players: "1 human + 3 hidden agents",
@@ -163,8 +176,10 @@ const roomTemplates: CreateRoomTemplate[] = [
     },
   },
   {
+    id: "settlement",
     game: "settlement",
     title: "Settlement",
+    icon: "⌘",
     strap: "Turn-based coalition strain",
     detail: "Rotate through pledges and hidden commitments across a live frontier room.",
     players: "1 human + 3 hidden agents",
@@ -206,6 +221,31 @@ function getOpenMaskCount(room: PublicRoomState): number {
 
 function getClaimedMaskCount(room: PublicRoomState): number {
   return room.joinState?.claimedSeatIds.length ?? room.seats.filter((seat) => seat.isConnected && !seat.isReady).length;
+}
+
+function getHumanSeatCount(template: CreateRoomTemplate): number {
+  return template.payload.seats.filter((seat) => seat.backingType === "human").length;
+}
+
+function getHiddenSeatCount(template: CreateRoomTemplate): number {
+  return template.payload.seats.filter((seat) => seat.backingType !== "human").length;
+}
+
+function getRoomIcon(game: GameKey): string {
+  switch (game) {
+    case "auction":
+      return "◈";
+    case "split":
+      return "⟂";
+    case "pact":
+      return "✦";
+    case "vault":
+      return "◫";
+    case "settlement":
+      return "⌘";
+    default:
+      return "•";
+  }
 }
 
 export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps) {
@@ -280,61 +320,107 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
     }
   };
 
+  const featuredTemplates = roomTemplates.filter((template) => template.game === "auction");
+  const secondaryTemplates = roomTemplates.filter((template) => template.game !== "auction");
+
   return (
-    <div className="stack">
-      <div className="section-row">
+    <div className={styles.mainColumn}>
+      <div className={styles.sectionHeading}>
         <div>
-          <h2>Launch a live room</h2>
-          <p className="muted">
-            Every fresh room starts joinable. Enter with one browser, claim the lone human mask, and play against
-            hidden agent seats.
+          <h2>Launch rail</h2>
+          <p>
+            Start with Auction if you need a clean demo. The other games are here when you want to
+            show breadth after the main loop lands.
           </p>
         </div>
-        <div className="inline-actions">
-          <button className="button" onClick={() => void refreshRooms()} type="button">
-            {isPending ? "Refreshing..." : "Refresh"}
+        <div className={styles.actionRow}>
+          <button className={styles.ghostButton} onClick={() => void refreshRooms()} type="button">
+            {isPending ? "Refreshing..." : "Refresh board"}
           </button>
-          <Link className="button" href="/rooms">
-            Room index
+          <Link className={styles.ghostButton} href="/rooms">
+            Full room index
           </Link>
         </div>
       </div>
 
-      {error ? <div className="panel error-panel">{error}</div> : null}
+      {error ? <div className={styles.error}>{error}</div> : null}
 
-      <div className="card-grid">
-        {roomTemplates.map((template) => (
-          <article className="panel tile-card" key={template.game}>
-            <div className="tile-topline">
-              <span className="pill accent">{template.title}</span>
-              <span className="pill subtle">{template.players}</span>
+      <div className={styles.quickRail}>
+        {featuredTemplates.map((template) => (
+          <article className={styles.railCard} key={template.id}>
+            <div className={styles.railTopline}>
+              <span className={`${styles.pill} ${styles.pillWarm}`}>Featured demo</span>
+              <span className={`${styles.pill} ${styles.pillMuted}`}>{template.players}</span>
             </div>
-            <h3>{template.strap}</h3>
-            <p className="muted">{template.detail}</p>
-            <div className="metric-grid">
-              <div className="metric">
+            <div className={styles.railTitle}>
+              <div className={styles.iconShell}>{template.icon}</div>
+              <div>
+                <h3>{template.title}</h3>
+                <p>{template.strap}</p>
+              </div>
+            </div>
+            <p className={styles.note}>{template.detail}</p>
+            <div className={styles.metrics}>
+              <div className={styles.metric}>
                 <span>Human masks</span>
-                <strong>1</strong>
+                <strong>{getHumanSeatCount(template)}</strong>
               </div>
-              <div className="metric">
+              <div className={styles.metric}>
                 <span>Hidden seats</span>
-                <strong>{template.payload.seats.length - 1}</strong>
+                <strong>{getHiddenSeatCount(template)}</strong>
               </div>
-              <div className="metric">
+              <div className={styles.metric}>
                 <span>Game</span>
                 <strong>{labelGame(template.game)}</strong>
               </div>
             </div>
-            <div className="inline-actions">
+            <div className={styles.actionRow}>
               <button
-                className="button primary"
+                className={styles.actionButton}
                 disabled={creatingGame === template.game}
                 onClick={() => void createRoom(template)}
                 type="button"
               >
-                {creatingGame === template.game ? "Opening..." : `Create ${template.title}`}
+                {creatingGame === template.game ? "Opening room..." : `Create ${template.title}`}
               </button>
-              <Link className="button" href={`/games/${template.game}`}>
+              <Link className={styles.ghostButton} href={`/games/${template.game}`}>
+                Game brief
+              </Link>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className={styles.subsectionHeading}>
+        <h3>More game slices</h3>
+        <p>Use these after the flagship demo when you want to show the broader format library.</p>
+      </div>
+
+      <div className={styles.liveGrid}>
+        {secondaryTemplates.map((template) => (
+          <article className={styles.railCard} key={template.id}>
+            <div className={styles.railTopline}>
+              <span className={`${styles.pill} ${styles.pillCool}`}>{labelGame(template.game)}</span>
+              <span className={`${styles.pill} ${styles.pillMuted}`}>{template.players}</span>
+            </div>
+            <div className={styles.railTitle}>
+              <div className={styles.iconShell}>{template.icon}</div>
+              <div>
+                <h3>{template.title}</h3>
+                <p>{template.strap}</p>
+              </div>
+            </div>
+            <p className={styles.note}>{template.detail}</p>
+            <div className={styles.actionRow}>
+              <button
+                className={styles.actionButton}
+                disabled={creatingGame === template.game}
+                onClick={() => void createRoom(template)}
+                type="button"
+              >
+                {creatingGame === template.game ? "Opening room..." : "Launch room"}
+              </button>
+              <Link className={styles.ghostButton} href={`/games/${template.game}`}>
                 Brief
               </Link>
             </div>
@@ -342,14 +428,12 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
         ))}
       </div>
 
-      <div className="section-row">
-        <div>
-          <h2>Active rooms</h2>
-          <p className="muted">Open any live room, claim one visible mask, then let the rest stay identity-blinded.</p>
-        </div>
+      <div className={styles.subsectionHeading}>
+        <h3>Live rooms</h3>
+        <p>Open any active room, claim one visible mask, and leave the rest of the table ambiguous.</p>
       </div>
 
-      <div className="card-grid">
+      <div className={styles.liveGrid}>
         {rooms.map((room) => {
           const readySeats = room.seats.filter((seat) => seat.isReady).length;
           const connectedSeats = room.seats.filter((seat) => seat.isConnected).length;
@@ -358,49 +442,59 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
           const auctionState = isAuctionRoom(room) ? room.publicState : null;
 
           return (
-            <article className="panel tile-card" key={room.roomId}>
-              <div className="tile-topline">
-                <span className="pill accent">{labelGame(room.game)}</span>
-                <span className="pill subtle">{room.phase}</span>
+            <article className={styles.liveCard} key={room.roomId}>
+              <div className={styles.liveTopline}>
+                <span className={`${styles.pill} ${styles.pillCool}`}>{labelGame(room.game)}</span>
+                <span className={`${styles.pill} ${styles.pillMuted}`}>{room.phase}</span>
               </div>
-              <h3>{labelGame(room.game)} room</h3>
-              <p className="muted">
-                Match <code>{room.matchId.slice(0, 8)}</code> · round {room.round}
+              <div className={styles.railTitle}>
+                <div className={styles.iconShell}>{getRoomIcon(room.game)}</div>
+                <div>
+                  <h3 className={styles.liveTitle}>{labelGame(room.game)} room</h3>
+                  <p>
+                    Match <span className={styles.mono}>{room.matchId.slice(0, 8)}</span> · round {room.round}
+                  </p>
+                </div>
+              </div>
+              <p className={styles.note}>
+                {openSeats > 0
+                  ? `${openSeats} visible mask${openSeats === 1 ? "" : "s"} still available to claim.`
+                  : "All visible masks are claimed or the room is already in motion."}
               </p>
 
               {auctionState ? (
-                <div className="metric-grid metric-grid-large">
-                  <div className="metric">
+                <div className={styles.metrics}>
+                  <div className={styles.metric}>
                     <span>Current bid</span>
                     <strong>{auctionState.currentBid}</strong>
                   </div>
-                  <div className="metric">
+                  <div className={styles.metric}>
                     <span>Pot</span>
                     <strong>{auctionState.currentPot}</strong>
                   </div>
-                  <div className="metric">
+                  <div className={styles.metric}>
                     <span>Turns left</span>
                     <strong>{auctionState.turnsRemaining}</strong>
                   </div>
                 </div>
               ) : null}
 
-              <div className="metric-grid">
-                <div className="metric">
+              <div className={styles.metrics}>
+                <div className={styles.metric}>
                   <span>Open masks</span>
                   <strong>{openSeats}</strong>
                 </div>
-                <div className="metric">
+                <div className={styles.metric}>
                   <span>Claimed</span>
                   <strong>{claimedSeats}</strong>
                 </div>
-                <div className="metric">
+                <div className={styles.metric}>
                   <span>Ready</span>
                   <strong>
                     {readySeats}/{room.seats.length}
                   </strong>
                 </div>
-                <div className="metric">
+                <div className={styles.metric}>
                   <span>Connected</span>
                   <strong>
                     {connectedSeats}/{room.seats.length}
@@ -408,19 +502,19 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
                 </div>
               </div>
 
-              <div className="seat-column">
+              <div className={styles.seatList}>
                 {room.seats.map((seat) => {
                   const isOpen = room.joinState?.openSeatIds.includes(seat.seatId) ?? (!seat.isConnected && !seat.isReady);
                   const isClaimed = room.joinState?.claimedSeatIds.includes(seat.seatId) ?? (seat.isConnected && !seat.isReady);
                   const status = isOpen ? "Open mask" : isClaimed ? "Claimed mask" : "Hidden seat";
 
                   return (
-                    <div className="seat-line" key={seat.seatId}>
-                      <div>
+                    <div className={styles.seatRow} key={seat.seatId}>
+                      <div className={styles.seatCopy}>
                         <strong>{seat.displayName}</strong>
                         <span>{status}</span>
                       </div>
-                      <span className={`pill ${seat.isReady ? "accent" : "subtle"}`}>
+                      <span className={`${styles.pill} ${seat.isReady ? styles.pillWarm : styles.pillMuted}`}>
                         {seat.isReady ? "Ready" : isOpen ? "Open" : isClaimed ? "Claimed" : "Live"}
                       </span>
                     </div>
@@ -428,11 +522,11 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
                 })}
               </div>
 
-              <div className="inline-actions">
-                <Link className="button primary" href={`/rooms/${room.roomId}`}>
+              <div className={styles.actionRow}>
+                <Link className={styles.actionButton} href={`/rooms/${room.roomId}`}>
                   Enter room
                 </Link>
-                <Link className="button" href={`/results/${room.roomId}`}>
+                <Link className={styles.ghostButton} href={`/results/${room.roomId}`}>
                   Result view
                 </Link>
               </div>
