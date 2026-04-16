@@ -1,0 +1,12 @@
+{
+  "name": "@arena/game-pact",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test:smoke": "tsx ../../../tests/simulations/pact-smoke.ts"
+  }
+}

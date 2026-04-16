@@ -1,0 +1,69 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "allowJs": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@arena/contracts": [
+        "packages/contracts/src/index.ts"
+      ],
+      "@arena/contracts/*": [
+        "packages/contracts/src/*"
+      ],
+      "@arena/game-sdk": [
+        "packages/game-sdk/src/index.ts"
+      ],
+      "@arena/game-sdk/*": [
+        "packages/game-sdk/src/*"
+      ],
+      "@arena/agents": [
+        "packages/agents/src/index.ts"
+      ],
+      "@arena/agents/*": [
+        "packages/agents/src/*"
+      ],
+      "@arena/theme": [
+        "packages/theme/src/index.ts"
+      ],
+      "@arena/theme/*": [
+        "packages/theme/src/*"
+      ],
+      "@arena/payments": [
+        "packages/payments/src/index.ts"
+      ],
+      "@arena/payments/*": [
+        "packages/payments/src/*"
+      ],
+      "@arena/leaderboard": [
+        "packages/leaderboard/src/index.ts"
+      ],
+      "@arena/leaderboard/*": [
+        "packages/leaderboard/src/*"
+      ],
+      "@arena/game-split": [
+        "packages/games/split/src/index.ts"
+      ],
+      "@arena/game-pact": [
+        "packages/games/pact/src/index.ts"
+      ],
+      "@arena/game-vault": [
+        "packages/games/vault/src/index.ts"
+      ],
+      "@arena/game-auction": [
+        "packages/games/auction/src/index.ts"
+      ],
+      "@arena/game-settlement": [
+        "packages/games/settlement/src/index.ts"
+      ]
+    }
+  }
+}

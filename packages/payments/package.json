@@ -1,0 +1,12 @@
+{
+  "name": "@arena/payments",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "tsx ../../tests/simulations/payments-smoke.ts"
+  }
+}

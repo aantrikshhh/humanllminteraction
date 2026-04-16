@@ -1,0 +1,27 @@
+{
+  "name": "arena-platform",
+  "private": true,
+  "version": "0.0.0",
+  "description": "ARENA multiplayer benchmark platform scaffold",
+  "packageManager": "npm@11.6.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "packages/games/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "node -e \"console.log('Run a workspace dev script, for example: npm run dev -w @arena/web')\"",
+    "dev:web": "npm run dev -w @arena/web",
+    "dev:api": "npm run dev -w @arena/api",
+    "dev:rooms": "npm run dev -w @arena/rooms",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.3"
+  }
+}
