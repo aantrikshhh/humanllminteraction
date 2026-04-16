@@ -1,0 +1,369 @@
+.page {
+  position: relative;
+  overflow: hidden;
+}
+
+.stack {
+  display: grid;
+  gap: 2rem;
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.9fr);
+  gap: 2rem;
+  padding: clamp(2rem, 4vw, 3rem);
+  border: 1px solid rgba(181, 203, 245, 0.16);
+  border-radius: 2rem;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(242, 193, 104, 0.22), transparent 28%),
+    radial-gradient(circle at 82% 14%, rgba(119, 216, 255, 0.12), transparent 22%),
+    linear-gradient(135deg, rgba(9, 18, 30, 0.98), rgba(5, 9, 16, 0.96));
+  box-shadow: 0 32px 120px rgba(0, 0, 0, 0.34);
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(transparent 0 88%, rgba(255, 255, 255, 0.03) 88% 89%, transparent 89% 100%);
+  background-size: 100% 22px;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.heroCopy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1.4rem;
+  align-content: start;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.76rem;
+}
+
+.headline {
+  margin: 0;
+  max-width: 13ch;
+  font-family: var(--font-display), serif;
+  font-size: clamp(3.2rem, 8vw, 6.6rem);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+}
+
+.lede {
+  max-width: 44rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.heroMeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.metaCard {
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.metaCard span,
+.controlCard span,
+.signalCard span,
+.railCard span,
+.statusCard span,
+.sectionKicker,
+.seatStatus,
+.seatEmphasis {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.metaCard strong,
+.controlCard strong,
+.signalCard strong,
+.statusCard strong {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 1.05rem;
+}
+
+.heroStage {
+  position: relative;
+  min-height: 100%;
+  border: 1px solid rgba(188, 209, 248, 0.12);
+  border-radius: 1.8rem;
+  padding: 1.35rem;
+  background:
+    linear-gradient(180deg, rgba(12, 24, 39, 0.94), rgba(7, 12, 20, 0.98));
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.heroStage::before,
+.heroStage::after {
+  content: "";
+  position: absolute;
+  inset: auto;
+  border-radius: 999px;
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.heroStage::before {
+  right: 8%;
+  top: 10%;
+  width: 7rem;
+  height: 7rem;
+  background: rgba(242, 193, 104, 0.16);
+  animation: pulse 5.8s ease-in-out infinite;
+}
+
+.heroStage::after {
+  left: 12%;
+  bottom: 12%;
+  width: 8rem;
+  height: 8rem;
+  background: rgba(119, 216, 255, 0.14);
+  animation: pulse 7s ease-in-out infinite reverse;
+}
+
+.statusCard {
+  position: relative;
+  z-index: 1;
+  padding: 1rem 1.05rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.statusCallout {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.seatGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.seatCard {
+  padding: 0.95rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: grid;
+  gap: 0.8rem;
+}
+
+.seatMask {
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 1.1rem;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  color: #06101c;
+  background: var(--seat-accent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 32px rgba(0, 0, 0, 0.28);
+}
+
+.seatBody {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.seatBody strong {
+  font-size: 1rem;
+}
+
+.seatStatus {
+  color: rgba(234, 241, 255, 0.72);
+}
+
+.seatEmphasis {
+  color: rgba(242, 193, 104, 0.92);
+}
+
+.signalGrid,
+.premiseGrid,
+.detailGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.signalGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.signalCard,
+.railCard,
+.controlCard {
+  padding: 1.1rem 1.15rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(188, 209, 248, 0.12);
+  background: linear-gradient(180deg, rgba(9, 18, 30, 0.9), rgba(6, 11, 18, 0.92));
+}
+
+.signalCard p,
+.premiseColumn p,
+.controlCard p,
+.railCard ul,
+.sectionCopy {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.premiseGrid,
+.detailGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.premiseColumn {
+  padding: 1.2rem 1.25rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(188, 209, 248, 0.1);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.premiseColumn h2,
+.supportSection h2,
+.detailSection h2,
+.finalSection h2 {
+  margin: 0;
+  font-size: clamp(1.55rem, 3vw, 2.1rem);
+}
+
+.sectionHead {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 44rem;
+}
+
+.sectionKicker {
+  text-transform: uppercase;
+}
+
+.supportSection,
+.detailSection,
+.finalSection {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.controlCard {
+  gap: 0.65rem;
+}
+
+.controlCard ol {
+  margin: 0.85rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  display: grid;
+  gap: 0.65rem;
+  line-height: 1.65;
+}
+
+.railCard ul {
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.finalSection {
+  padding: 1.6rem;
+  border: 1px solid rgba(242, 193, 104, 0.16);
+  border-radius: 1.7rem;
+  background:
+    radial-gradient(circle at right top, rgba(242, 193, 104, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(10, 19, 31, 0.94), rgba(5, 9, 15, 0.98));
+}
+
+.finalBody {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.proofLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+  color: var(--muted);
+}
+
+.proofLine strong {
+  color: var(--foreground);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 0.82;
+    transform: scale(1.06);
+  }
+}
+
+@media (max-width: 1080px) {
+  .hero,
+  .detailGrid,
+  .premiseGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .signalGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .hero,
+  .finalSection {
+    padding: 1.25rem;
+  }
+
+  .heroMeta,
+  .seatGrid,
+  .signalGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .headline {
+    max-width: 10ch;
+  }
+}
