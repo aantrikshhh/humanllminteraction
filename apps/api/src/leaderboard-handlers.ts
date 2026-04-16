@@ -5,6 +5,7 @@ import {
   getLeaderboardSnapshot,
   getPlayerLeaderboardView,
 } from "./leaderboard-store";
+import { recordMatchLeaderboardApplication } from "./match-ledger-store";
 import type {
   ApplyLeaderboardMatchRequest,
   ApplyLeaderboardMatchResponse,
@@ -41,9 +42,11 @@ export async function routeLeaderboardRequest(
 
   if (request.method === "POST" && url.pathname === "/leaderboard/matches/apply") {
     const body = await readJsonBody<ApplyLeaderboardMatchRequest>(request);
+    const applied = applyResolvedLeaderboardMatch(body.match);
+    recordMatchLeaderboardApplication(body.match, applied);
     const payload: ApplyLeaderboardMatchResponse = {
       ok: true,
-      data: applyResolvedLeaderboardMatch(body.match),
+      data: applied,
     };
     writeJson(response, 200, payload);
     return true;

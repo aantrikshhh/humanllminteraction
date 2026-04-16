@@ -8,6 +8,8 @@ import {
   type PaymentsEngine,
 } from "@arena/payments";
 
+import { recordMatchSettlement } from "./match-ledger-store";
+
 export interface PaymentsApi {
   connectWallet(input: CreateWalletInput): ReturnType<PaymentsEngine["connectWallet"]>;
   getWallet(playerId: string): ReturnType<PaymentsEngine["getWalletSummary"]>;
@@ -115,7 +117,9 @@ export async function handlePaymentsRequest(
 
     if (method === "POST" && url.pathname === "/payments/settlements") {
       const body = await readJson<MatchSettlementInput>(request);
-      writeJson(response, 201, api.settleMatch(body));
+      const payouts = api.settleMatch(body);
+      recordMatchSettlement(body, payouts, api.getEscrow(body.escrowId));
+      writeJson(response, 201, payouts);
       return true;
     }
 

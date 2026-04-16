@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 
 import { routeLeaderboardRequest } from "./leaderboard-handlers.js";
+import { routeMatchLedgerRequest } from "./match-ledger-handlers.js";
 import { handlePaymentsRequest } from "./payments.js";
 
 const port = Number(process.env.PORT ?? 4010);
@@ -14,7 +15,14 @@ const server = createServer(async (request, response) => {
       JSON.stringify({
         service: "@arena/api",
         status: "ok",
-        routes: ["/leaderboard", "/leaderboard/players/:playerId", "/payments/*"],
+        routes: [
+          "/leaderboard",
+          "/leaderboard/players/:playerId",
+          "/payments/*",
+          "/matches/:matchId",
+          "/matches/rooms/:roomId",
+          "/matches/*",
+        ],
       }),
     );
     return;
@@ -25,6 +33,10 @@ const server = createServer(async (request, response) => {
   }
 
   if (await handlePaymentsRequest(request, response)) {
+    return;
+  }
+
+  if (await routeMatchLedgerRequest(request, response)) {
     return;
   }
 
