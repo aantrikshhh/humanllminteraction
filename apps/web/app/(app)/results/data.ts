@@ -60,240 +60,394 @@ export interface ResultsSnapshot {
   isPreview: boolean;
 }
 
-const fallbackReplayEvents: ReplayEvent[] = [
-  {
-    sequence: 1,
-    type: "room.created",
-    occurredAt: "2026-04-16T09:20:00.000Z",
-    publicPayload: {
-      game: "auction",
-      seatCount: 4,
-    },
-  },
-  {
-    sequence: 2,
-    type: "room.phase",
-    occurredAt: "2026-04-16T09:22:00.000Z",
-    publicPayload: {
-      phase: "active",
-      round: 1,
-    },
-  },
-  {
-    sequence: 3,
-    type: "auction.bid",
-    occurredAt: "2026-04-16T09:23:00.000Z",
-    actorSeatId: "seat_1",
-    publicPayload: {
-      amount: 6,
-      pot: 24,
-    },
-  },
-  {
-    sequence: 4,
-    type: "auction.pass",
-    occurredAt: "2026-04-16T09:24:00.000Z",
-    actorSeatId: "seat_2",
-    publicPayload: {},
-  },
-  {
-    sequence: 5,
-    type: "auction.pass",
-    occurredAt: "2026-04-16T09:24:30.000Z",
-    actorSeatId: "seat_3",
-    publicPayload: {},
-  },
-  {
-    sequence: 6,
-    type: "auction.pass",
-    occurredAt: "2026-04-16T09:25:00.000Z",
-    actorSeatId: "seat_4",
-    publicPayload: {},
-  },
-  {
-    sequence: 7,
-    type: "match.result",
-    occurredAt: "2026-04-16T09:25:05.000Z",
-    publicPayload: {
-      winningSeatIds: ["seat_1"],
-      completedAt: "2026-04-16T09:25:05.000Z",
-    },
-  },
+const seatCatalog = [
+  { seatId: "seat_1", displayName: "Mask 1", avatarId: "mask-amber" },
+  { seatId: "seat_2", displayName: "Mask 2", avatarId: "mask-cyan" },
+  { seatId: "seat_3", displayName: "Mask 3", avatarId: "mask-rose" },
+  { seatId: "seat_4", displayName: "Mask 4", avatarId: "mask-verdant" },
 ];
 
-const fallbackRoomById: Record<string, PublicRoomState> = {
-  "demo-auction-results": {
+interface ResultFixture {
+  roomId: string;
+  matchId: string;
+  game: GameKey;
+  completedAt: string;
+  winningSeatIds: string[];
+  seatScores: Record<string, number>;
+  summary: string;
+  publicState: Record<string, unknown>;
+  replayEvents: ReplayEvent[];
+  seatImpacts: ResultsMatchLedgerSeatImpact[];
+  payments?: ResultsMatchLedger["payments"];
+}
+
+function buildSeats(seatScores: Record<string, number>) {
+  return seatCatalog.map((seat) => ({
+    ...seat,
+    isConnected: true,
+    isReady: true,
+    score: seatScores[seat.seatId],
+  }));
+}
+
+const fallbackResultFixtures: ResultFixture[] = [
+  {
     roomId: "demo-auction-results",
-    matchId: "match-demo-auction-results",
+    matchId: "match-demo-auction",
     game: "auction",
-    phase: "results",
-    round: 4,
-    lastEventAt: "2026-04-16T09:25:05.000Z",
-    seats: [
-      {
-        seatId: "seat_1",
-        displayName: "Seat 1",
-        avatarId: "mask-amber",
-        isConnected: true,
-        isReady: true,
-        score: 24,
-      },
-      {
-        seatId: "seat_4",
-        displayName: "Seat 4",
-        avatarId: "mask-verdant",
-        isConnected: true,
-        isReady: true,
-        score: 12,
-      },
-      {
-        seatId: "seat_2",
-        displayName: "Seat 2",
-        avatarId: "mask-cyan",
-        isConnected: true,
-        isReady: true,
-        score: 4,
-      },
-      {
-        seatId: "seat_3",
-        displayName: "Seat 3",
-        avatarId: "mask-rose",
-        isConnected: true,
-        isReady: true,
-        score: -3,
-      },
-    ],
-    publicResult: {
-      completedAt: "2026-04-16T09:25:05.000Z",
-      winningSeatIds: ["seat_1"],
-      seatScores: {
-        seat_1: 24,
-        seat_2: 4,
-        seat_3: -3,
-        seat_4: 12,
-      },
-    },
-    replaySummary: {
-      available: true,
-      eventCount: fallbackReplayEvents.length,
-      lastSequence: fallbackReplayEvents.at(-1)?.sequence,
-      lastOccurredAt: fallbackReplayEvents.at(-1)?.occurredAt,
-    },
-    matchSync: {
-      status: "synced",
-      attempts: 1,
-      lastAttemptAt: "2026-04-16T09:25:07.000Z",
-      syncedAt: "2026-04-16T09:25:07.000Z",
-    },
+    completedAt: "2026-04-16T09:31:00.000Z",
+    winningSeatIds: ["seat_1"],
+    seatScores: { seat_1: 21, seat_2: 12, seat_3: 6, seat_4: 3 },
+    summary:
+      "Mask 1 held the final price line on the Signal Relay and converted the room with the cleanest late-bid discipline.",
     publicState: {
-      pot: 24,
-      currentBid: 6,
+      itemName: "Signal Relay",
+      finalBid: 8,
+      finalPot: 21,
       winnerSeatId: "seat_1",
-      summary: "Seat 1 closed the final bid cycle and captured the largest share of the room.",
+      summary:
+        "Mask 1 held the final price line on the Signal Relay and converted the room with the cleanest late-bid discipline.",
     },
-  },
-};
-
-const fallbackReplayById: Record<string, ReplayEnvelope> = {
-  "demo-auction-results": {
-    matchId: "match-demo-auction-results",
-    game: "auction",
-    version: 1,
-    seed: "match-demo-auction-results",
-    createdAt: "2026-04-16T09:20:00.000Z",
-    events: fallbackReplayEvents,
-  },
-};
-
-const fallbackMatchLedgerById: Record<string, ResultsMatchLedger> = {
-  "demo-auction-results": {
-    status: "fully_recorded",
-    publicResult: {
-      completedAt: "2026-04-16T09:25:05.000Z",
-      winningSeatIds: ["seat_1"],
-      seatScores: {
-        seat_1: 24,
-        seat_2: 4,
-        seat_3: -3,
-        seat_4: 12,
-      },
-    },
-    matchSync: {
-      status: "synced",
-      attempts: 1,
-      lastAttemptAt: "2026-04-16T09:25:07.000Z",
-      syncedAt: "2026-04-16T09:25:07.000Z",
-    },
+    replayEvents: [
+      { sequence: 1, type: "room.created", occurredAt: "2026-04-16T09:20:00.000Z", publicPayload: { game: "auction", seatCount: 4 } },
+      { sequence: 2, type: "auction.bid", occurredAt: "2026-04-16T09:24:00.000Z", actorSeatId: "seat_2", publicPayload: { amount: 6, pot: 15 } },
+      { sequence: 3, type: "auction.bid", occurredAt: "2026-04-16T09:26:00.000Z", actorSeatId: "seat_1", publicPayload: { amount: 8, pot: 21 } },
+      { sequence: 4, type: "match.result", occurredAt: "2026-04-16T09:31:00.000Z", publicPayload: { winningSeatIds: ["seat_1"], completedAt: "2026-04-16T09:31:00.000Z" } },
+    ],
     seatImpacts: [
       {
         seatId: "seat_1",
         playerId: "demo-player",
-        displayName: "Seat 1",
-        score: 24,
+        displayName: "Mask 1",
+        score: 21,
         isWinner: true,
-        leaderboard: {
-          delta: 18,
-          previousRating: 1502,
-          newRating: 1520,
-          matchesPlayed: 16,
-          wins: 11,
-        },
-        payout: {
-          payoutId: "payout-demo-auction",
-          amountUsd: 18,
-          currency: "USDC",
-          status: "ready",
-          lifecycleStatus: "available_to_claim",
-        },
-      },
-      {
-        seatId: "seat_4",
-        displayName: "Seat 4",
-        score: 12,
-        isWinner: false,
-        leaderboard: {
-          delta: 6,
-          previousRating: 1478,
-          newRating: 1484,
-          matchesPlayed: 13,
-          wins: 7,
-        },
+        leaderboard: { delta: 16, previousRating: 1530, newRating: 1546, matchesPlayed: 15, wins: 10 },
+        payout: { payoutId: "payout-demo-auction", amountUsd: 18, currency: "USDC", status: "ready", lifecycleStatus: "available_to_claim" },
       },
       {
         seatId: "seat_2",
-        displayName: "Seat 2",
-        score: 4,
+        playerId: "player-kestrel",
+        displayName: "Mask 2",
+        score: 12,
         isWinner: false,
-        leaderboard: {
-          delta: -2,
-          previousRating: 1523,
-          newRating: 1521,
-          matchesPlayed: 15,
-          wins: 9,
-        },
+        leaderboard: { delta: 5, previousRating: 1527, newRating: 1532, matchesPlayed: 17, wins: 10 },
       },
       {
         seatId: "seat_3",
-        displayName: "Seat 3",
-        score: -3,
+        playerId: "player-sable",
+        displayName: "Mask 3",
+        score: 6,
         isWinner: false,
-        leaderboard: {
-          delta: -8,
-          previousRating: 1506,
-          newRating: 1498,
-          matchesPlayed: 14,
-          wins: 8,
-        },
+        leaderboard: { delta: -4, previousRating: 1522, newRating: 1518, matchesPlayed: 14, wins: 8 },
+      },
+      {
+        seatId: "seat_4",
+        playerId: "player-orbit",
+        displayName: "Mask 4",
+        score: 3,
+        isWinner: false,
+        leaderboard: { delta: -5, previousRating: 1509, newRating: 1504, matchesPlayed: 13, wins: 7 },
       },
     ],
     payments: {
-      settledAt: "2026-04-16T09:25:07.000Z",
+      settledAt: "2026-04-16T09:34:00.000Z",
       escrowId: "escrow-demo-auction",
       totalPayoutUsd: 18,
     },
-    updatedAt: "2026-04-16T09:25:07.000Z",
   },
-};
+  {
+    roomId: "demo-split-results",
+    matchId: "match-demo-split",
+    game: "split",
+    completedAt: "2026-04-16T08:42:00.000Z",
+    winningSeatIds: ["seat_2"],
+    seatScores: { seat_1: 6, seat_2: 14 },
+    summary:
+      "Mask 2 rejected the soft split, forced a cleaner second offer, and closed the room with the higher share.",
+    publicState: {
+      pot: 20,
+      acceptedSplit: { seat_1: 6, seat_2: 14 },
+      winnerSeatId: "seat_2",
+      summary:
+        "Mask 2 rejected the soft split, forced a cleaner second offer, and closed the room with the higher share.",
+    },
+    replayEvents: [
+      { sequence: 1, type: "room.created", occurredAt: "2026-04-16T08:33:00.000Z", publicPayload: { game: "split", seatCount: 2 } },
+      { sequence: 2, type: "split.offer", occurredAt: "2026-04-16T08:35:00.000Z", actorSeatId: "seat_1", publicPayload: { offer: { seat_1: 8, seat_2: 12 } } },
+      { sequence: 3, type: "split.reject", occurredAt: "2026-04-16T08:37:00.000Z", actorSeatId: "seat_2", publicPayload: {} },
+      { sequence: 4, type: "split.offer", occurredAt: "2026-04-16T08:40:00.000Z", actorSeatId: "seat_2", publicPayload: { offer: { seat_1: 6, seat_2: 14 } } },
+      { sequence: 5, type: "match.result", occurredAt: "2026-04-16T08:42:00.000Z", publicPayload: { winningSeatIds: ["seat_2"], completedAt: "2026-04-16T08:42:00.000Z" } },
+    ],
+    seatImpacts: [
+      {
+        seatId: "seat_1",
+        playerId: "player-helios",
+        displayName: "Mask 1",
+        score: 6,
+        isWinner: false,
+        leaderboard: { delta: -4, previousRating: 1483, newRating: 1479, matchesPlayed: 11, wins: 5 },
+      },
+      {
+        seatId: "seat_2",
+        playerId: "demo-player",
+        displayName: "Mask 2",
+        score: 14,
+        isWinner: true,
+        leaderboard: { delta: 9, previousRating: 1537, newRating: 1546, matchesPlayed: 15, wins: 10 },
+        payout: { payoutId: "payout-demo-split", amountUsd: 14, currency: "USDC", status: "paid", lifecycleStatus: "claimed_simulated" },
+      },
+    ],
+    payments: {
+      settledAt: "2026-04-16T08:47:00.000Z",
+      escrowId: "escrow-demo-split",
+      totalPayoutUsd: 14,
+    },
+  },
+  {
+    roomId: "demo-pact-results",
+    matchId: "match-demo-pact",
+    game: "pact",
+    completedAt: "2026-04-16T08:56:00.000Z",
+    winningSeatIds: ["seat_2"],
+    seatScores: { seat_1: 9, seat_2: 11 },
+    summary:
+      "Mask 2 protected the final two rounds and edged the pact room after a single decisive endgame betrayal.",
+    publicState: {
+      roundCount: 10,
+      finalTrustIndex: 0.46,
+      winnerSeatId: "seat_2",
+      summary:
+        "Mask 2 protected the final two rounds and edged the pact room after a single decisive endgame betrayal.",
+    },
+    replayEvents: [
+      { sequence: 1, type: "room.created", occurredAt: "2026-04-16T08:44:00.000Z", publicPayload: { game: "pact", seatCount: 2 } },
+      { sequence: 2, type: "pact.commit", occurredAt: "2026-04-16T08:48:00.000Z", actorSeatId: "seat_1", publicPayload: { round: 4, commitment: "cooperate" } },
+      { sequence: 3, type: "pact.commit", occurredAt: "2026-04-16T08:54:00.000Z", actorSeatId: "seat_2", publicPayload: { round: 10, commitment: "betray" } },
+      { sequence: 4, type: "match.result", occurredAt: "2026-04-16T08:56:00.000Z", publicPayload: { winningSeatIds: ["seat_2"], completedAt: "2026-04-16T08:56:00.000Z" } },
+    ],
+    seatImpacts: [
+      {
+        seatId: "seat_1",
+        playerId: "demo-player",
+        displayName: "Mask 1",
+        score: 9,
+        isWinner: false,
+        leaderboard: { delta: -3, previousRating: 1549, newRating: 1546, matchesPlayed: 15, wins: 10 },
+      },
+      {
+        seatId: "seat_2",
+        playerId: "player-orbit",
+        displayName: "Mask 2",
+        score: 11,
+        isWinner: true,
+        leaderboard: { delta: 4, previousRating: 1500, newRating: 1504, matchesPlayed: 13, wins: 7 },
+      },
+    ],
+  },
+  {
+    roomId: "demo-vault-results",
+    matchId: "match-demo-vault",
+    game: "vault",
+    completedAt: "2026-04-16T09:12:00.000Z",
+    winningSeatIds: ["seat_4"],
+    seatScores: { seat_1: 7, seat_2: 9, seat_3: 12, seat_4: 16 },
+    summary:
+      "Mask 4 stayed quiet through the accusation cycle, took the final vault line, and left settlement pending for the winner.",
+    publicState: {
+      vaultValue: 44,
+      accusationSeatId: "seat_2",
+      winnerSeatId: "seat_4",
+      summary:
+        "Mask 4 stayed quiet through the accusation cycle, took the final vault line, and left settlement pending for the winner.",
+    },
+    replayEvents: [
+      { sequence: 1, type: "room.created", occurredAt: "2026-04-16T09:00:00.000Z", publicPayload: { game: "vault", seatCount: 4 } },
+      { sequence: 2, type: "vault.contribute", occurredAt: "2026-04-16T09:05:00.000Z", actorSeatId: "seat_4", publicPayload: { contribution: 5, vaultValue: 31 } },
+      { sequence: 3, type: "vault.accuse", occurredAt: "2026-04-16T09:09:00.000Z", actorSeatId: "seat_2", publicPayload: { targetSeatId: "seat_3" } },
+      { sequence: 4, type: "match.result", occurredAt: "2026-04-16T09:12:00.000Z", publicPayload: { winningSeatIds: ["seat_4"], completedAt: "2026-04-16T09:12:00.000Z" } },
+    ],
+    seatImpacts: [
+      {
+        seatId: "seat_1",
+        playerId: "player-sable",
+        displayName: "Mask 1",
+        score: 7,
+        isWinner: false,
+        leaderboard: { delta: -2, previousRating: 1520, newRating: 1518, matchesPlayed: 14, wins: 8 },
+      },
+      {
+        seatId: "seat_2",
+        playerId: "player-rune",
+        displayName: "Mask 2",
+        score: 9,
+        isWinner: false,
+        leaderboard: { delta: -1, previousRating: 1492, newRating: 1491, matchesPlayed: 12, wins: 6 },
+      },
+      {
+        seatId: "seat_3",
+        playerId: "player-iris",
+        displayName: "Mask 3",
+        score: 12,
+        isWinner: false,
+        leaderboard: { delta: 0, previousRating: 1568, newRating: 1568, matchesPlayed: 18, wins: 12 },
+      },
+      {
+        seatId: "seat_4",
+        playerId: "demo-player",
+        displayName: "Mask 4",
+        score: 16,
+        isWinner: true,
+        leaderboard: { delta: 0, previousRating: 1546, newRating: 1546, matchesPlayed: 15, wins: 10 },
+        payout: { payoutId: "payout-demo-vault", amountUsd: 11, currency: "USDC", status: "pending", lifecycleStatus: "pending_settlement" },
+      },
+    ],
+    payments: {
+      settledAt: "2026-04-16T09:12:15.000Z",
+      escrowId: "escrow-demo-vault",
+      totalPayoutUsd: 11,
+    },
+  },
+  {
+    roomId: "demo-settlement-results",
+    matchId: "match-demo-settlement",
+    game: "settlement",
+    completedAt: "2026-04-16T09:48:00.000Z",
+    winningSeatIds: ["seat_3"],
+    seatScores: { seat_1: 18, seat_2: 20, seat_3: 24, seat_4: 13 },
+    summary:
+      "Mask 3 stabilized the harbor vote, held food output through the shortage, and closed the settlement with the largest civic score.",
+    publicState: {
+      districts: [
+        { district: "Granary", ownerSeatId: "seat_3", output: 8 },
+        { district: "Harbor", ownerSeatId: "seat_3", output: 7 },
+        { district: "Forge", ownerSeatId: "seat_2", output: 5 },
+      ],
+      crisisResolved: true,
+      winnerSeatId: "seat_3",
+      summary:
+        "Mask 3 stabilized the harbor vote, held food output through the shortage, and closed the settlement with the largest civic score.",
+    },
+    replayEvents: [
+      { sequence: 1, type: "room.created", occurredAt: "2026-04-16T09:34:00.000Z", publicPayload: { game: "settlement", seatCount: 4 } },
+      { sequence: 2, type: "settlement.vote", occurredAt: "2026-04-16T09:41:00.000Z", actorSeatId: "seat_3", publicPayload: { measure: "harbor_rationing", passed: true } },
+      { sequence: 3, type: "settlement.crisis", occurredAt: "2026-04-16T09:45:00.000Z", publicPayload: { type: "late_harvest_shortage", resolved: true } },
+      { sequence: 4, type: "match.result", occurredAt: "2026-04-16T09:48:00.000Z", publicPayload: { winningSeatIds: ["seat_3"], completedAt: "2026-04-16T09:48:00.000Z" } },
+    ],
+    seatImpacts: [
+      {
+        seatId: "seat_1",
+        playerId: "player-rune",
+        displayName: "Mask 1",
+        score: 18,
+        isWinner: false,
+        leaderboard: { delta: 0, previousRating: 1491, newRating: 1491, matchesPlayed: 12, wins: 6 },
+      },
+      {
+        seatId: "seat_2",
+        playerId: "player-iris",
+        displayName: "Mask 2",
+        score: 20,
+        isWinner: false,
+        leaderboard: { delta: 0, previousRating: 1568, newRating: 1568, matchesPlayed: 18, wins: 12 },
+      },
+      {
+        seatId: "seat_3",
+        playerId: "demo-player",
+        displayName: "Mask 3",
+        score: 24,
+        isWinner: true,
+        leaderboard: { delta: 0, previousRating: 1546, newRating: 1546, matchesPlayed: 15, wins: 10 },
+        payout: { payoutId: "payout-demo-settlement", amountUsd: 23, currency: "USDC", status: "paid", lifecycleStatus: "claimed_simulated" },
+      },
+      {
+        seatId: "seat_4",
+        playerId: "player-kestrel",
+        displayName: "Mask 4",
+        score: 13,
+        isWinner: false,
+        leaderboard: { delta: 0, previousRating: 1532, newRating: 1532, matchesPlayed: 17, wins: 10 },
+      },
+    ],
+    payments: {
+      settledAt: "2026-04-16T09:53:00.000Z",
+      escrowId: "escrow-demo-settlement",
+      totalPayoutUsd: 23,
+    },
+  },
+];
+
+const fallbackRoomById = Object.fromEntries(
+  fallbackResultFixtures.map((fixture) => {
+    const lastEvent = fixture.replayEvents.at(-1);
+    return [
+      fixture.roomId,
+      {
+        roomId: fixture.roomId,
+        matchId: fixture.matchId,
+        game: fixture.game,
+        phase: "results",
+        round: fixture.replayEvents.length,
+        lastEventAt: lastEvent?.occurredAt ?? fixture.completedAt,
+        seats: buildSeats(fixture.seatScores),
+        publicResult: {
+          completedAt: fixture.completedAt,
+          winningSeatIds: fixture.winningSeatIds,
+          seatScores: fixture.seatScores,
+        },
+        replaySummary: {
+          available: true,
+          eventCount: fixture.replayEvents.length,
+          lastSequence: lastEvent?.sequence,
+          lastOccurredAt: lastEvent?.occurredAt,
+        },
+        matchSync: {
+          status: "synced",
+          attempts: 1,
+          lastAttemptAt: fixture.payments?.settledAt ?? fixture.completedAt,
+          syncedAt: fixture.payments?.settledAt ?? fixture.completedAt,
+        },
+        publicState: fixture.publicState,
+      } satisfies PublicRoomState,
+    ];
+  }),
+) as Record<string, PublicRoomState>;
+
+const fallbackReplayById = Object.fromEntries(
+  fallbackResultFixtures.map((fixture) => [
+    fixture.roomId,
+    {
+      matchId: fixture.matchId,
+      game: fixture.game,
+      version: 1,
+      seed: fixture.matchId,
+      createdAt: fixture.replayEvents[0]?.occurredAt ?? fixture.completedAt,
+      events: fixture.replayEvents,
+    } satisfies ReplayEnvelope,
+  ]),
+) as Record<string, ReplayEnvelope>;
+
+const fallbackMatchLedgerById = Object.fromEntries(
+  fallbackResultFixtures.map((fixture) => [
+    fixture.roomId,
+    {
+      status: fixture.payments ? "fully_recorded" : "leaderboard_recorded",
+      publicResult: {
+        completedAt: fixture.completedAt,
+        winningSeatIds: fixture.winningSeatIds,
+        seatScores: fixture.seatScores,
+      },
+      matchSync: {
+        status: "synced",
+        attempts: 1,
+        lastAttemptAt: fixture.payments?.settledAt ?? fixture.completedAt,
+        syncedAt: fixture.payments?.settledAt ?? fixture.completedAt,
+      },
+      seatImpacts: fixture.seatImpacts,
+      payments: fixture.payments,
+      updatedAt: fixture.payments?.settledAt ?? fixture.completedAt,
+    } satisfies ResultsMatchLedger,
+  ]),
+) as Record<string, ResultsMatchLedger>;
 
 export async function getResultsSnapshot(
   roomId: string,
@@ -337,11 +491,9 @@ export async function getResultsSnapshot(
     };
   }
 
-  const fallbackRoom = fallbackRoomById[roomId] ?? fallbackRoomById["demo-auction-results"] ?? null;
-  const fallbackReplay =
-    fallbackReplayById[roomId] ?? fallbackReplayById["demo-auction-results"] ?? null;
-  const fallbackMatchLedger =
-    fallbackMatchLedgerById[roomId] ?? fallbackMatchLedgerById["demo-auction-results"] ?? null;
+  const fallbackRoom = fallbackRoomById[roomId] ?? null;
+  const fallbackReplay = fallbackReplayById[roomId] ?? null;
+  const fallbackMatchLedger = fallbackMatchLedgerById[roomId] ?? null;
 
   return {
     room: fallbackRoom,

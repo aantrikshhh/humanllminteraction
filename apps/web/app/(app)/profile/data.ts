@@ -65,7 +65,7 @@ const personaDirectory: Record<string, ProfilePersona> = {
   "demo-player": {
     displayName: "Cipher",
     codename: "Signal Operator",
-    note: "Private player shell for a seat-blinded ladder identity.",
+    note: "Private ladder shell tracking how Cipher performs across blinded human and model-backed rooms.",
   },
   "player-iris": {
     displayName: "Iris",
@@ -82,34 +82,83 @@ const personaDirectory: Record<string, ProfilePersona> = {
     codename: "Vault Reader",
     note: "Builds steady ladder equity across mixed human and model rooms.",
   },
+  "player-orbit": {
+    displayName: "Orbit",
+    codename: "Pact Breaker",
+    note: "Leans into late-turn reversals when trust metrics start to flatten out.",
+  },
+  "player-helios": {
+    displayName: "Helios",
+    codename: "Settlement Broker",
+    note: "Prefers slower civic rooms and narrower variance over flashy closes.",
+  },
 };
 
 const fallbackHistory: ProfileHistoryItem[] = [
   {
+    id: "fallback-settlement",
+    matchId: "match-demo-settlement",
+    roomId: "demo-settlement-results",
+    game: "settlement",
+    outcome: "won",
+    amountLabel: formatUsd(23),
+    settledAtLabel: formatDateTime("2026-04-16T09:53:00.000Z"),
+    seatCountLabel: "4 visible seats",
+    replayLabel: "Replay attached",
+    roomStateLabel: "Escrow claimed",
+    resultsHref: "/results/demo-settlement-results",
+  },
+  {
     id: "fallback-auction",
     matchId: "match-demo-auction",
-    roomId: "demo-auction-room",
+    roomId: "demo-auction-results",
     game: "auction",
     outcome: "won",
     amountLabel: formatUsd(18),
     settledAtLabel: formatDateTime("2026-04-16T09:34:00.000Z"),
     seatCountLabel: "4 visible seats",
     replayLabel: "Replay attached",
-    roomStateLabel: "Room complete",
-    resultsHref: "/results/demo-auction-room",
+    roomStateLabel: "Ready to claim",
+    resultsHref: "/results/demo-auction-results",
+  },
+  {
+    id: "fallback-vault",
+    matchId: "match-demo-vault",
+    roomId: "demo-vault-results",
+    game: "vault",
+    outcome: "pending",
+    amountLabel: formatUsd(11),
+    settledAtLabel: formatDateTime("2026-04-16T09:12:15.000Z"),
+    seatCountLabel: "4 visible seats",
+    replayLabel: "Replay attached",
+    roomStateLabel: "Settlement pending",
+    resultsHref: "/results/demo-vault-results",
+  },
+  {
+    id: "fallback-pact",
+    matchId: "match-demo-pact",
+    roomId: "demo-pact-results",
+    game: "pact",
+    outcome: "pending",
+    amountLabel: "No payout recorded",
+    settledAtLabel: formatDateTime("2026-04-16T08:56:00.000Z"),
+    seatCountLabel: "2 visible seats",
+    replayLabel: "Replay attached",
+    roomStateLabel: "Room settled without a payout",
+    resultsHref: "/results/demo-pact-results",
   },
   {
     id: "fallback-split",
-    matchId: "match-shadow-split",
-    roomId: null,
+    matchId: "match-demo-split",
+    roomId: "demo-split-results",
     game: "split",
-    outcome: "pending",
-    amountLabel: "Private result pending",
-    settledAtLabel: formatDateTime("2026-04-16T08:52:00.000Z"),
+    outcome: "won",
+    amountLabel: formatUsd(14),
+    settledAtLabel: formatDateTime("2026-04-16T08:47:00.000Z"),
     seatCountLabel: "2 visible seats",
-    replayLabel: "Replay withheld",
-    roomStateLabel: "Operator export required",
-    resultsHref: null,
+    replayLabel: "Replay attached",
+    roomStateLabel: "Claim simulated",
+    resultsHref: "/results/demo-split-results",
   },
 ];
 
@@ -139,7 +188,7 @@ function makePersona(playerId: string, walletPlayerId: string): ProfilePersona {
         .split(/[-_]/g)
         .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
         .join(" "),
-      codename: "ARENA Participant",
+      codename: "Turing Games Participant",
       note: "Private profile shell assembled from current room, ladder, and payout surfaces.",
     }
   );
@@ -166,30 +215,57 @@ function buildHistoryFromServices(
       const room = roomsByMatchId.get(payout.matchId);
       const escrow = escrowById.get(payout.escrowId);
       const game = room?.game ?? escrow?.gameId ?? "auction";
+      const isPending = payout.status === "pending";
+      const isReady = payout.status === "ready";
+      const roomStateLabel = room
+        ? room.phase === "results"
+          ? isPending
+            ? "Settlement pending"
+            : isReady
+              ? "Claim window open"
+              : "Room complete"
+          : `Public room ${room.phase}`
+        : isPending
+          ? "Settlement pending"
+          : "Payout recorded";
 
       return {
         id: payout.payoutId,
         matchId: payout.matchId,
         roomId: room?.roomId ?? null,
         game,
-        outcome: "won" as const,
-        amountLabel: formatUsd(payout.amountUsd),
+        outcome: isPending ? ("pending" as const) : ("won" as const),
+        amountLabel: isPending ? `${formatUsd(payout.amountUsd)} pending` : formatUsd(payout.amountUsd),
         settledAtLabel: formatDateTime(payout.updatedAt),
-        seatCountLabel: `${room?.seats.length ?? 0} visible seats`,
-        replayLabel: room ? "Replay path available" : "Replay unavailable",
-        roomStateLabel: room ? `Public room ${room.phase}` : "Payout recorded",
-        resultsHref: room ? `/results/${room.roomId}` : null,
+        seatCountLabel: room ? `${room.seats.length} visible seats` : "Public record only",
+        replayLabel:
+          room?.replaySummary?.available || room?.phase === "results"
+            ? "Replay attached"
+            : room
+              ? "Replay queued"
+              : "Replay unavailable",
+        roomStateLabel,
+        resultsHref: room?.phase === "results" ? `/results/${room.roomId}` : null,
       };
     });
 
-  if (payoutHistory.length > 0) {
-    return payoutHistory;
-  }
-
-  return fallbackHistory.map((entry) => ({
+  const seededHistory = fallbackHistory.map((entry) => ({
     ...entry,
     id: `${playerId}-${entry.id}`,
   }));
+
+  const mergedHistory = [...payoutHistory];
+  const seenMatchIds = new Set(payoutHistory.map((entry) => entry.matchId));
+
+  for (const entry of seededHistory) {
+    if (seenMatchIds.has(entry.matchId)) {
+      continue;
+    }
+    mergedHistory.push(entry);
+    seenMatchIds.add(entry.matchId);
+  }
+
+  return mergedHistory.slice(0, 6);
 }
 
 export async function getProfileSnapshot(playerId = "demo-player"): Promise<ProfileSnapshot> {

@@ -30,7 +30,7 @@ export default async function ResultsIndexPage() {
     <main className="app-shell">
       <div className="shell stack">
         <div className="topbar topbar-app">
-          <div className="brand">ARENA</div>
+          <div className="brand">Turing Games</div>
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
@@ -43,11 +43,11 @@ export default async function ResultsIndexPage() {
         <section className="hero-band">
           <div className="stack">
             <div className="eyebrow">Results</div>
-            <h1 className="section-title">Completed rooms, no reveal required.</h1>
+            <h1 className="section-title">Completed rooms, still identity-blinded.</h1>
             <p className="muted section-copy">
-              Post-match surfaces stay public, seat-based, and read-only. Winners, scores, replay
-              availability, payout status, and ladder sync can all be shown without disclosing
-              which opponents were human or model-backed.
+              This is the public archive for finished matches. Winners, scores, replay access,
+              ladder movement, and payout state can all be shown here without disclosing which
+              seats were human or model-backed.
             </p>
           </div>
           <div className="service-stack">
@@ -70,20 +70,20 @@ export default async function ResultsIndexPage() {
           <div className="stack">
               <div className="section-row">
                 <div>
-                  <h2>Completed rooms</h2>
+                  <h2>Available result pages</h2>
                   <p className="muted">
-                    Browse result pages from the live runtime when available, otherwise use the seeded
-                  preview room.
-                </p>
-              </div>
-              <div className="inline-actions">
-                <Link className="button" href="/rooms">
-                  Live rooms
-                </Link>
-                <Link className="button" href="/lobby">
-                  Back to lobby
-                </Link>
-              </div>
+                    Open finished rooms from the live runtime when they exist. If no room has
+                    settled yet, the seeded preview keeps the flow demoable.
+                  </p>
+                </div>
+                <div className="inline-actions">
+                  <Link className="button" href="/rooms">
+                    Live rooms
+                  </Link>
+                  <Link className="button" href="/lobby">
+                    Back to lobby
+                  </Link>
+                </div>
               </div>
 
             <div className="card-grid card-grid-single">
@@ -99,7 +99,7 @@ export default async function ResultsIndexPage() {
                   <p className="muted">
                     {room.phase === "results"
                       ? "Room finalized and ready for replay, payout, and leaderboard follow-through."
-                      : "Seeded completed room with replay and placeholder downstream state."}
+                      : "Seeded completed room used to keep the MVP walkthrough intact before the first live room settles."}
                   </p>
                   <div className="inline-actions">
                     <Link className="button primary" href={`/results/${room.roomId}`}>
@@ -116,33 +116,33 @@ export default async function ResultsIndexPage() {
               ))}
             </div>
 
-            <div className="panel">
-              <div className="section-row">
-                <h2>Continue through the app</h2>
-                <span className="pill subtle">Read surfaces</span>
-              </div>
-              <div className="compact-list">
-                <div className="compact-row">
-                  <div>
-                    <strong>Watch rooms before they settle</strong>
-                    <span>Use the room catalog to jump into the live stage before the result locks.</span>
-                  </div>
-                  <Link href="/rooms">Open rooms</Link>
+              <div className="panel">
+                <div className="section-row">
+                  <h2>Where to go after results</h2>
+                  <span className="pill subtle">Next views</span>
                 </div>
-                <div className="compact-row">
-                  <div>
-                    <strong>Check ranking impact</strong>
-                    <span>Leaderboard stays player-based while result pages remain seat-blinded.</span>
+                <div className="compact-list">
+                  <div className="compact-row">
+                    <div>
+                      <strong>Watch rooms before they settle</strong>
+                      <span>Use the room board when you want the on-camera transition from live play into final results.</span>
+                    </div>
+                    <Link href="/rooms">Open rooms</Link>
                   </div>
-                  <Link href="/leaderboard">Open board</Link>
-                </div>
-                <div className="compact-row">
-                  <div>
-                    <strong>Verify payout state</strong>
-                    <span>Escrow and payout status live on the payment surface after the room closes.</span>
+                  <div className="compact-row">
+                    <div>
+                      <strong>Check rating impact</strong>
+                      <span>The leaderboard keeps player-based rank visible while result pages remain seat-blinded.</span>
+                    </div>
+                    <Link href="/leaderboard">Open board</Link>
                   </div>
-                  <Link href="/payments">Open payments</Link>
-                </div>
+                  <div className="compact-row">
+                    <div>
+                      <strong>Verify payout state</strong>
+                      <span>The payment surface shows escrow progress and winner payouts after the room closes.</span>
+                    </div>
+                    <Link href="/payments">Open payments</Link>
+                  </div>
               </div>
             </div>
           </div>

@@ -31,8 +31,8 @@ export default async function LobbyPage() {
           <div className={styles.brandBlock}>
             <div className={styles.brandMark}>A</div>
             <div className={styles.brandMeta}>
-              <span className={styles.brandKicker}>Blinded Multiplayer Arena</span>
-              <div className={styles.brandName}>ARENA</div>
+              <span className={styles.brandKicker}>Blinded Multiplayer Benchmark</span>
+              <div className={styles.brandName}>Turing Games</div>
             </div>
           </div>
           <nav className={styles.nav}>
@@ -49,7 +49,7 @@ export default async function LobbyPage() {
             <div className={styles.eyebrow}>Live Lobby</div>
             <h1 className={styles.heroTitle}>Play the room. Guess the minds.</h1>
             <p className={styles.heroText}>
-              This is the fastest ARENA demo path: launch a blinded multiplayer match, claim one
+              This is the fastest Turing Games demo path: launch a blinded multiplayer match, claim one
               mask, and let the rest of the table stay ambiguous while the room flows into results,
               ladder movement, and payout state.
             </p>

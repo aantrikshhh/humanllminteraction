@@ -7,23 +7,38 @@ import type {
   SeatId,
 } from "@arena/contracts";
 
-import {
-  type AuctionAction,
-  type AuctionActionBid,
-  type AuctionActionEnvelope,
-  type AuctionConfig,
-  type AuctionPrivateState,
-  type AuctionPublicState,
-  type AuctionSeatPublicView,
-  type AuctionSeatState,
-  createAuctionConfig,
+import type {
+  AuctionAction,
+  AuctionActionEnvelope,
+  AuctionMatchSettleReason,
+  AuctionPrivateState,
+  AuctionPublicState,
+  AuctionRoundRecord,
+  AuctionRoundSettleReason,
+  AuctionSeatState,
 } from "./types";
+import { createAuctionConfig } from "./types";
 
-export function createAuctionSeats(seats: SeatAssignment[]): AuctionSeatState[] {
+function computeNetScore(seat: Pick<AuctionSeatState, "totalSpent" | "totalValueWon">): number {
+  return seat.totalValueWon - seat.totalSpent;
+}
+
+function getRoundOpeningSeatId(seatOrder: SeatId[], roundIndex: number): SeatId {
+  return seatOrder[roundIndex % seatOrder.length] ?? seatOrder[0]!;
+}
+
+export function createAuctionSeats(
+  seats: SeatAssignment[],
+  startingBankroll: number,
+): AuctionSeatState[] {
   return seats.map(({ publicSeat }) => ({
     seatId: publicSeat.seatId,
     displayName: publicSeat.displayName,
     avatarId: publicSeat.avatarId,
+    bankroll: startingBankroll,
+    totalSpent: 0,
+    totalValueWon: 0,
+    roundsWon: 0,
     committedBid: 0,
     hasPassed: false,
   }));
@@ -39,19 +54,27 @@ export function createAuctionState(
 
   const seatOrder = seats.map((seat) => seat.publicSeat.seatId);
   const config = createAuctionConfig(seats.length);
+  const currentRoundOpeningSeatId = getRoundOpeningSeatId(seatOrder, 0);
 
   return {
     seed,
     config,
     phase: "bidding",
-    seats: createAuctionSeats(seats),
+    seats: createAuctionSeats(seats, config.startingBankroll),
     seatOrder,
+    roundIndex: 0,
+    roundHistory: [],
+    currentRoundPrizeValue: config.prizeValues[0] ?? config.itemValue,
+    currentRoundOpeningSeatId,
     turnIndex: 0,
-    currentTurnSeatId: seatOrder[0],
+    actionCount: 0,
+    eventCount: 0,
+    roundActionCount: 0,
+    currentTurnSeatId: currentRoundOpeningSeatId,
     currentBid: 0,
     currentPot: 0,
-    actionCount: 0,
     passes: 0,
+    currentRoundPasses: 0,
   };
 }
 
@@ -63,14 +86,17 @@ export function findSeat(state: AuctionPrivateState, seatId: SeatId): AuctionSea
   return seat;
 }
 
-export function getLiveSeatIds(state: AuctionPrivateState): SeatId[] {
+function sortSeatIdsByOrder(state: AuctionPrivateState, seatIds: readonly SeatId[]): SeatId[] {
+  return [...seatIds].sort(
+    (left, right) => state.seatOrder.indexOf(left) - state.seatOrder.indexOf(right),
+  );
+}
+
+function getActiveSeatIds(state: AuctionPrivateState): SeatId[] {
   return state.seats.filter((seat) => !seat.hasPassed).map((seat) => seat.seatId);
 }
 
-export function getNextSeatId(
-  state: AuctionPrivateState,
-  afterSeatId: SeatId,
-): SeatId | undefined {
+function getNextSeatId(state: AuctionPrivateState, afterSeatId: SeatId): SeatId | undefined {
   const startIndex = state.seatOrder.indexOf(afterSeatId);
   if (startIndex < 0) {
     return undefined;
@@ -87,8 +113,42 @@ export function getNextSeatId(
   return undefined;
 }
 
-export function getLeaderSeatId(state: AuctionPrivateState): SeatId | undefined {
-  return state.currentLeaderSeatId;
+function resolveRoundWinner(state: AuctionPrivateState): SeatId {
+  const activeSeatIds = getActiveSeatIds(state);
+  if (activeSeatIds.length === 1) {
+    return activeSeatIds[0]!;
+  }
+
+  const ranked = [...state.seats].sort((left, right) => {
+    if (right.committedBid !== left.committedBid) {
+      return right.committedBid - left.committedBid;
+    }
+
+    return state.seatOrder.indexOf(left.seatId) - state.seatOrder.indexOf(right.seatId);
+  });
+
+  return ranked[0]?.seatId ?? state.seatOrder[0]!;
+}
+
+function resolveMatchWinner(state: AuctionPrivateState): SeatId {
+  const ranked = [...state.seats].sort((left, right) => {
+    const scoreDelta = computeNetScore(right) - computeNetScore(left);
+    if (scoreDelta !== 0) {
+      return scoreDelta;
+    }
+
+    if (right.bankroll !== left.bankroll) {
+      return right.bankroll - left.bankroll;
+    }
+
+    if (right.totalValueWon !== left.totalValueWon) {
+      return right.totalValueWon - left.totalValueWon;
+    }
+
+    return state.seatOrder.indexOf(left.seatId) - state.seatOrder.indexOf(right.seatId);
+  });
+
+  return ranked[0]?.seatId ?? state.seatOrder[0]!;
 }
 
 export function validateAuctionAction(
@@ -99,32 +159,37 @@ export function validateAuctionAction(
     throw new Error("Auction already settled.");
   }
 
-  if (envelope.seatId !== state.currentTurnSeatId) {
+  if (!state.currentTurnSeatId || envelope.seatId !== state.currentTurnSeatId) {
     throw new Error(`It is not seat ${envelope.seatId}'s turn.`);
   }
 
   const actor = findSeat(state, envelope.seatId);
   if (actor.hasPassed) {
-    throw new Error(`Seat ${envelope.seatId} has already passed.`);
+    throw new Error(`Seat ${envelope.seatId} has already passed this round.`);
   }
 
-  const action = envelope.action;
-  if (action.type === "auction.pass") {
+  if (envelope.action.type === "auction.pass") {
     return;
   }
 
-  if (!Number.isInteger(action.amount)) {
+  if (!Number.isInteger(envelope.action.amount)) {
     throw new Error("Auction bids must be integer values.");
   }
 
-  if (action.amount < state.currentBid + state.config.minIncrement) {
+  if (envelope.action.amount < state.currentBid + state.config.minIncrement) {
     throw new Error(
       `Auction bids must raise the current bid by at least ${state.config.minIncrement}.`,
     );
   }
 
-  if (action.amount > state.config.maxBid) {
+  if (envelope.action.amount > state.config.maxBid) {
     throw new Error(`Auction bids cannot exceed ${state.config.maxBid}.`);
+  }
+
+  if (envelope.action.amount > actor.bankroll) {
+    throw new Error(
+      `Seat ${envelope.seatId} cannot bid above its remaining bankroll of ${actor.bankroll}.`,
+    );
   }
 }
 
@@ -134,13 +199,24 @@ export function projectAuctionPublicState(
 ): AuctionPublicState {
   return {
     itemName: state.config.itemName,
-    itemValue: state.config.itemValue,
+    itemValue: state.currentRoundPrizeValue,
+    prizeValues: state.config.prizeValues,
+    startingBankroll: state.config.startingBankroll,
+    currentRound: state.roundIndex + 1,
+    totalRounds: state.config.prizeValues.length,
+    roundsRemaining: Math.max(
+      0,
+      state.config.prizeValues.length - Math.min(state.roundHistory.length, state.config.prizeValues.length),
+    ),
+    currentRoundPrizeValue: state.currentRoundPrizeValue,
+    currentRoundOpeningSeatId: state.currentRoundOpeningSeatId,
     currentBid: state.currentBid,
     currentPot: state.currentPot,
     currentLeaderSeatId: state.currentLeaderSeatId,
     currentTurnSeatId: state.phase === "bidding" ? state.currentTurnSeatId : undefined,
     turnIndex: state.turnIndex,
     turnsRemaining: Math.max(0, state.config.maxTurns - state.actionCount),
+    roundTurnsRemaining: Math.max(0, state.config.turnsPerRound - state.roundActionCount),
     maxTurns: state.config.maxTurns,
     phase: state.phase,
     winnerSeatId: state.winnerSeatId,
@@ -156,97 +232,30 @@ export function projectAuctionPublicState(
       avatarId: seat.avatarId,
       isConnected: true,
       isReady: true,
-      score: seat.committedBid,
+      score: computeNetScore(seat),
+      bankroll: seat.bankroll,
+      totalSpent: seat.totalSpent,
+      totalValueWon: seat.totalValueWon,
+      netScore: computeNetScore(seat),
       committedBid: seat.committedBid,
       hasPassed: seat.hasPassed,
       isLeader: state.currentLeaderSeatId === seat.seatId,
+      roundsWon: seat.roundsWon,
+    })),
+    history: state.roundHistory.map((entry) => ({
+      roundNumber: entry.roundNumber,
+      prizeValue: entry.prizeValue,
+      openingSeatId: entry.openingSeatId,
+      winnerSeatId: entry.winnerSeatId,
+      winningBid: entry.winningBid,
+      pot: entry.pot,
+      settledBy: entry.settledBy,
+      actionCount: entry.actionCount,
     })),
   };
 }
 
-export function countActiveSeats(state: AuctionPrivateState): number {
-  return state.seats.filter((seat) => !seat.hasPassed).length;
-}
-
-function compareSeatOrder(state: AuctionPrivateState, left: SeatId, right: SeatId): number {
-  return state.seatOrder.indexOf(left) - state.seatOrder.indexOf(right);
-}
-
-export function resolveAuctionWinner(state: AuctionPrivateState): SeatId {
-  const ranked = [...state.seats].sort((left, right) => {
-    if (right.committedBid !== left.committedBid) {
-      return right.committedBid - left.committedBid;
-    }
-    return compareSeatOrder(state, left.seatId, right.seatId);
-  });
-  return ranked[0]?.seatId ?? state.seatOrder[0];
-}
-
-export function settleAuction(
-  state: AuctionPrivateState,
-  nowIso: string,
-  reason: AuctionPrivateState["settledBy"],
-): AuctionPrivateState {
-  const winnerSeatId =
-    reason === "one_active"
-      ? state.seats.find((seat) => !seat.hasPassed)?.seatId ?? resolveAuctionWinner(state)
-      : resolveAuctionWinner(state);
-  return {
-    ...state,
-    phase: "settled",
-    currentTurnSeatId: winnerSeatId,
-    winnerSeatId,
-    settledAt: nowIso,
-    settledBy: reason,
-  };
-}
-
-export function summarizeAuctionBehavior(state: AuctionPrivateState): BehavioralOutput[] {
-  return [
-    { metricKey: "auction.item_value", value: state.config.itemValue, unit: "credits" },
-    { metricKey: "auction.final_pot", value: state.currentPot, unit: "credits" },
-    { metricKey: "auction.final_bid", value: state.currentBid, unit: "credits" },
-    { metricKey: "auction.passes", value: state.passes, unit: "count" },
-    { metricKey: "auction.turns", value: state.actionCount, unit: "turns" },
-    {
-      metricKey: "auction.turn_limit_reached",
-      value: state.settledBy === "turn_limit",
-      unit: "boolean",
-    },
-  ];
-}
-
-export function computeAuctionScores(state: AuctionPrivateState): Record<SeatId, number> {
-  const winnerSeatId = state.winnerSeatId ?? resolveAuctionWinner(state);
-  const scores: Record<SeatId, number> = {};
-
-  for (const seat of state.seats) {
-    scores[seat.seatId] =
-      seat.seatId === winnerSeatId
-        ? state.config.itemValue - seat.committedBid
-        : seat.committedBid === 0 ? 0 : -seat.committedBid;
-  }
-
-  return scores;
-}
-
-export function buildAuctionMatchResult(
-  state: AuctionPrivateState,
-  roomState: PublicRoomState<AuctionPublicState>,
-): MatchResult {
-  const winnerSeatId = state.winnerSeatId ?? resolveAuctionWinner(state);
-  return {
-    matchId: roomState.matchId,
-    game: "auction",
-    roomId: roomState.roomId,
-    completedAt: state.settledAt ?? new Date().toISOString(),
-    winningSeatIds: [winnerSeatId],
-    seatScores: computeAuctionScores(state),
-    behavioralOutput: summarizeAuctionBehavior(state),
-  };
-}
-
-export function createAuctionEvent(
+function createAuctionEvent(
   sequence: number,
   type: string,
   occurredAt: string,
@@ -264,6 +273,197 @@ export function createAuctionEvent(
   };
 }
 
+function buildRoundRecord(
+  state: AuctionPrivateState,
+  winnerSeatId: SeatId,
+  settledBy: AuctionRoundSettleReason,
+): AuctionRoundRecord {
+  const spentBySeat = Object.fromEntries(
+    state.seats.map((seat) => [seat.seatId, seat.committedBid]),
+  ) as Record<SeatId, number>;
+  const scoreDeltaBySeat = Object.fromEntries(
+    state.seats.map((seat) => [
+      seat.seatId,
+      (seat.seatId === winnerSeatId ? state.currentRoundPrizeValue : 0) - seat.committedBid,
+    ]),
+  ) as Record<SeatId, number>;
+
+  return {
+    roundNumber: state.roundIndex + 1,
+    prizeValue: state.currentRoundPrizeValue,
+    openingSeatId: state.currentRoundOpeningSeatId,
+    winnerSeatId,
+    winningBid: findSeat(state, winnerSeatId).committedBid,
+    pot: state.currentPot,
+    settledBy,
+    actionCount: state.roundActionCount,
+    spentBySeat,
+    scoreDeltaBySeat,
+  };
+}
+
+function applyRoundOutcome(
+  state: AuctionPrivateState,
+  winnerSeatId: SeatId,
+): AuctionSeatState[] {
+  return state.seats.map((seat) => {
+    const spent = seat.committedBid;
+    const prizeGain = seat.seatId === winnerSeatId ? state.currentRoundPrizeValue : 0;
+
+    return {
+      ...seat,
+      bankroll: seat.bankroll - spent,
+      totalSpent: seat.totalSpent + spent,
+      totalValueWon: seat.totalValueWon + prizeGain,
+      roundsWon: seat.roundsWon + (seat.seatId === winnerSeatId ? 1 : 0),
+      committedBid: 0,
+      hasPassed: false,
+    };
+  });
+}
+
+function startNextRound(
+  state: AuctionPrivateState,
+  seats: AuctionSeatState[],
+): AuctionPrivateState {
+  const nextRoundIndex = state.roundIndex + 1;
+  const currentRoundOpeningSeatId = getRoundOpeningSeatId(state.seatOrder, nextRoundIndex);
+
+  return {
+    ...state,
+    seats,
+    roundIndex: nextRoundIndex,
+    currentRoundPrizeValue:
+      state.config.prizeValues[nextRoundIndex] ?? state.config.itemValue,
+    currentRoundOpeningSeatId,
+    currentTurnSeatId: currentRoundOpeningSeatId,
+    currentBid: 0,
+    currentLeaderSeatId: undefined,
+    currentPot: 0,
+    roundActionCount: 0,
+    currentRoundPasses: 0,
+  };
+}
+
+function settleMatch(
+  state: AuctionPrivateState,
+  seats: AuctionSeatState[],
+  nowIso: string,
+  reason: AuctionMatchSettleReason,
+): AuctionPrivateState {
+  const winnerSeatId = resolveMatchWinner({
+    ...state,
+    seats,
+  });
+
+  return {
+    ...state,
+    phase: "settled",
+    seats,
+    currentTurnSeatId: undefined,
+    currentBid: 0,
+    currentLeaderSeatId: undefined,
+    currentPot: 0,
+    winnerSeatId,
+    settledAt: nowIso,
+    settledBy: reason,
+  };
+}
+
+function settleCurrentRound(
+  state: AuctionPrivateState,
+  nowIso: string,
+  settledBy: AuctionRoundSettleReason,
+  matchReason: AuctionMatchSettleReason,
+): {
+  nextState: AuctionPrivateState;
+  roundRecord: AuctionRoundRecord;
+  isMatchComplete: boolean;
+} {
+  const winnerSeatId = resolveRoundWinner(state);
+  const roundRecord = buildRoundRecord(state, winnerSeatId, settledBy);
+  const settledSeats = applyRoundOutcome(state, winnerSeatId);
+  const nextHistory = [...state.roundHistory, roundRecord];
+  const roundSettledState: AuctionPrivateState = {
+    ...state,
+    seats: settledSeats,
+    roundHistory: nextHistory,
+  };
+
+  if (nextHistory.length >= state.config.prizeValues.length) {
+    return {
+      nextState: settleMatch(roundSettledState, settledSeats, nowIso, matchReason),
+      roundRecord,
+      isMatchComplete: true,
+    };
+  }
+
+  return {
+    nextState: startNextRound(roundSettledState, settledSeats),
+    roundRecord,
+    isMatchComplete: false,
+  };
+}
+
+function summarizeAuctionBehavior(state: AuctionPrivateState): BehavioralOutput[] {
+  const totalValueAwarded = state.roundHistory.reduce(
+    (sum, round) => sum + round.prizeValue,
+    0,
+  );
+  const totalPot = state.seats.reduce((sum, seat) => sum + seat.totalSpent, 0);
+
+  return [
+    {
+      metricKey: "auction.rounds_played",
+      value: state.roundHistory.length,
+      unit: "count",
+    },
+    {
+      metricKey: "auction.total_value_awarded",
+      value: totalValueAwarded,
+      unit: "credits",
+    },
+    {
+      metricKey: "auction.total_spend",
+      value: totalPot,
+      unit: "credits",
+    },
+    {
+      metricKey: "auction.passes",
+      value: state.passes,
+      unit: "count",
+    },
+    {
+      metricKey: "auction.turns",
+      value: state.actionCount,
+      unit: "turns",
+    },
+  ];
+}
+
+function computeAuctionScores(state: AuctionPrivateState): Record<SeatId, number> {
+  return Object.fromEntries(
+    state.seats.map((seat) => [seat.seatId, computeNetScore(seat)]),
+  ) as Record<SeatId, number>;
+}
+
+function buildAuctionMatchResult(
+  state: AuctionPrivateState,
+  roomState: PublicRoomState<AuctionPublicState>,
+): MatchResult {
+  const winnerSeatId = state.winnerSeatId ?? resolveMatchWinner(state);
+
+  return {
+    matchId: roomState.matchId,
+    game: "auction",
+    roomId: roomState.roomId,
+    completedAt: state.settledAt ?? roomState.lastEventAt,
+    winningSeatIds: [winnerSeatId],
+    seatScores: computeAuctionScores(state),
+    behavioralOutput: summarizeAuctionBehavior(state),
+  };
+}
+
 export function applyAuctionAction(
   state: AuctionPrivateState,
   envelope: AuctionActionEnvelope,
@@ -275,9 +475,8 @@ export function applyAuctionAction(
 } {
   validateAuctionAction(state, envelope);
 
-  const actor = findSeat(state, envelope.seatId);
   const updatedSeats = state.seats.map((seat) => {
-    if (seat.seatId !== actor.seatId) {
+    if (seat.seatId !== envelope.seatId) {
       return seat;
     }
 
@@ -294,7 +493,6 @@ export function applyAuctionAction(
     };
   });
 
-  const activeSeats = updatedSeats.filter((seat) => !seat.hasPassed);
   const currentBid =
     envelope.action.type === "auction.bid"
       ? Math.max(state.currentBid, envelope.action.amount)
@@ -303,49 +501,61 @@ export function applyAuctionAction(
     envelope.action.type === "auction.bid"
       ? envelope.seatId
       : state.currentLeaderSeatId;
-  const currentPot = updatedSeats.reduce((total, seat) => total + seat.committedBid, 0);
-  const passes = state.passes + (envelope.action.type === "auction.pass" ? 1 : 0);
+  const currentPot = updatedSeats.reduce((sum, seat) => sum + seat.committedBid, 0);
   const actionCount = state.actionCount + 1;
-
-  const nextSeatId = activeSeats.length > 1 ? getNextSeatId({ ...state, seats: updatedSeats }, envelope.seatId) : undefined;
-  const hitTurnLimit = actionCount >= state.config.maxTurns;
-  const oneSeatStanding = activeSeats.length <= 1;
-  const settleReason = oneSeatStanding
-    ? "one_active"
-    : hitTurnLimit
-      ? "turn_limit"
-      : undefined;
-  const nextStateBase: AuctionPrivateState = {
+  const roundActionCount = state.roundActionCount + 1;
+  const passes = state.passes + (envelope.action.type === "auction.pass" ? 1 : 0);
+  const currentRoundPasses =
+    state.currentRoundPasses + (envelope.action.type === "auction.pass" ? 1 : 0);
+  const workingState: AuctionPrivateState = {
     ...state,
     seats: updatedSeats,
     currentBid,
     currentLeaderSeatId,
     currentPot,
-    passes,
-    actionCount,
     turnIndex: actionCount,
-    currentTurnSeatId: nextSeatId ?? envelope.seatId,
+    actionCount,
+    roundActionCount,
+    passes,
+    currentRoundPasses,
   };
-  const shouldSettle = Boolean(settleReason);
-  const nextState = shouldSettle
-    ? settleAuction(nextStateBase, nowIso, settleReason)
-    : nextStateBase;
 
-  const events = [
+  const activeSeatIds = getActiveSeatIds(workingState);
+  const roundSettledBy: AuctionRoundSettleReason | undefined =
+    activeSeatIds.length <= 1
+      ? "one_active"
+      : roundActionCount >= state.config.turnsPerRound
+        ? "turn_limit"
+        : undefined;
+  const nextSeatId =
+    !roundSettledBy && workingState.currentTurnSeatId
+      ? getNextSeatId(workingState, envelope.seatId)
+      : undefined;
+  const baseState = roundSettledBy
+    ? workingState
+    : {
+        ...workingState,
+        currentTurnSeatId: nextSeatId ?? envelope.seatId,
+      };
+
+  const events: ReplayEvent[] = [
     createAuctionEvent(
-      actionCount,
+      state.eventCount + 1,
       envelope.action.type,
       nowIso,
       envelope.seatId,
       {
+        roundNumber: state.roundIndex + 1,
         actorSeatId: envelope.seatId,
         action: envelope.action,
-        currentBid: nextState.currentBid,
-        currentPot: nextState.currentPot,
+        currentBid: baseState.currentBid,
+        currentPot: baseState.currentPot,
+        currentLeaderSeatId: baseState.currentLeaderSeatId,
       },
       {
-        seats: nextState.seats.map((seat) => ({
+        seats: baseState.seats.map((seat) => ({
           seatId: seat.seatId,
+          bankroll: seat.bankroll,
           committedBid: seat.committedBid,
           hasPassed: seat.hasPassed,
         })),
@@ -353,45 +563,114 @@ export function applyAuctionAction(
     ),
   ];
 
-  if (shouldSettle) {
+  if (!roundSettledBy) {
+    const nextState = {
+      ...baseState,
+      eventCount: state.eventCount + events.length,
+    };
+
+    return {
+      nextState,
+      events,
+      isTerminal: false,
+    };
+  }
+
+  const roundSettlement = settleCurrentRound(
+    baseState,
+    nowIso,
+    roundSettledBy,
+    "all_rounds_complete",
+  );
+
+  events.push(
+    createAuctionEvent(
+      state.eventCount + events.length + 1,
+      "auction.round_settled",
+      nowIso,
+      undefined,
+      {
+        roundNumber: roundSettlement.roundRecord.roundNumber,
+        prizeValue: roundSettlement.roundRecord.prizeValue,
+        winnerSeatId: roundSettlement.roundRecord.winnerSeatId,
+        winningBid: roundSettlement.roundRecord.winningBid,
+        pot: roundSettlement.roundRecord.pot,
+        settledBy: roundSettlement.roundRecord.settledBy,
+      },
+      {
+        spentBySeat: roundSettlement.roundRecord.spentBySeat,
+        scoreDeltaBySeat: roundSettlement.roundRecord.scoreDeltaBySeat,
+      },
+    ),
+  );
+
+  if (roundSettlement.isMatchComplete) {
     events.push(
       createAuctionEvent(
-        actionCount + 1,
+        state.eventCount + events.length + 1,
         "match.settled",
         nowIso,
         undefined,
         {
-          winnerSeatId: nextState.winnerSeatId,
-          settledBy: nextState.settledBy,
-          currentBid: nextState.currentBid,
-          currentPot: nextState.currentPot,
+          winnerSeatId: roundSettlement.nextState.winnerSeatId,
+          settledBy: roundSettlement.nextState.settledBy,
+          roundsPlayed: roundSettlement.nextState.roundHistory.length,
+        },
+      ),
+    );
+  } else {
+    events.push(
+      createAuctionEvent(
+        state.eventCount + events.length + 1,
+        "auction.round_started",
+        nowIso,
+        undefined,
+        {
+          roundNumber: roundSettlement.nextState.roundIndex + 1,
+          prizeValue: roundSettlement.nextState.currentRoundPrizeValue,
+          openingSeatId: roundSettlement.nextState.currentRoundOpeningSeatId,
         },
       ),
     );
   }
 
+  const nextState = {
+    ...roundSettlement.nextState,
+    eventCount: state.eventCount + events.length,
+  };
+
   return {
     nextState,
     events,
-    isTerminal: shouldSettle,
+    isTerminal: roundSettlement.isMatchComplete,
   };
+}
+
+function forceFinalizeAuction(
+  state: AuctionPrivateState,
+  nowIso: string,
+): AuctionPrivateState {
+  if (state.phase === "settled") {
+    return state;
+  }
+
+  const roundState =
+    state.currentBid > 0 || state.currentRoundPasses > 0
+      ? settleCurrentRound(state, nowIso, "turn_limit", "forced_finalize").nextState
+      : state;
+
+  if (roundState.phase === "settled") {
+    return roundState;
+  }
+
+  return settleMatch(roundState, roundState.seats, nowIso, "forced_finalize");
 }
 
 export function finalizeAuctionMatch(
   state: AuctionPrivateState,
   publicState: PublicRoomState<AuctionPublicState>,
 ): MatchResult {
-  const settledState = state.phase === "settled"
-    ? state
-    : settleAuction(
-        {
-          ...state,
-          settledBy: state.actionCount >= state.config.maxTurns ? "turn_limit" : "all_passed",
-        },
-        publicState.lastEventAt,
-        state.actionCount >= state.config.maxTurns ? "turn_limit" : "all_passed",
-      );
-
+  const settledState = forceFinalizeAuction(state, publicState.lastEventAt);
   return buildAuctionMatchResult(settledState, publicState);
 }
 

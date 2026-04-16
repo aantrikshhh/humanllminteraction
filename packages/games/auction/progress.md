@@ -1,9 +1,16 @@
-Original prompt: implement a concrete first pass of the Auction game module, not just a plan. Use the existing `@arena/contracts` and `@arena/game-sdk` shapes. Add meaningful types and a reducer-friendly game module for a 3-5 seat all-pay auction with visible current bid, pass behavior, and deterministic settlement. Include at least one simulation-oriented smoke test if you add tests. Keep the implementation modular and typed.
+Original prompt: redesign the Auction game module from a one-shot all-pay auction into a multi-round bankroll game while keeping the action surface practical for the existing room runtime.
 
-- Started the Auction slice implementation.
-- Local `develop-web-game` skill is available and being followed for small-step validation.
-- Added a deterministic smoke test that exercises a bidding race and the one-active settlement path.
-- Verification passed:
+- Reworked Auction into a three-round bankroll match.
+- Each seat now carries a visible bankroll across rounds instead of resolving after one prize.
+- Action surface stayed the same: `auction.bid` sets the seat's current-round total commitment and `auction.pass` exits only the current round.
+- Round settlement is deterministic and typed:
+  - one active seat remaining, or
+  - round turn cap reached
+- Final match scoring is now `total prize value won - total credits spent`.
+- Added round history, per-seat bankroll/value/spend tracking, and replay events for `auction.round_settled` and `auction.round_started`.
+- Updated the smoke coverage to exercise:
+  - a full three-round bidding match
+  - a pass-heavy match with zero-bid round wins
+- Focused verification to run after implementation:
   - `npm run typecheck -w @arena/game-auction`
   - `npm test -w @arena/game-auction`
-- Remaining blocker: the shared room/runtime integration still needs to consume this module; the slice is self-contained but not yet wired into `apps/rooms`.

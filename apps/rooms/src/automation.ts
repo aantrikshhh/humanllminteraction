@@ -314,9 +314,13 @@ function listAuctionActions(publicState: AuctionPublicState): AuctionAction[] {
     return [];
   }
 
+  const actingSeat = publicState.currentTurnSeatId
+    ? publicState.seats.find((seat) => seat.seatId === publicState.currentTurnSeatId)
+    : null;
+  const maxBid = Math.min(AUCTION_MAX_BID, actingSeat?.bankroll ?? AUCTION_MAX_BID);
   const nextBid = publicState.currentBid + AUCTION_MIN_INCREMENT;
-  const mediumBid = Math.min(AUCTION_MAX_BID, nextBid + AUCTION_MIN_INCREMENT * 2);
-  const highBid = Math.min(AUCTION_MAX_BID, nextBid + AUCTION_MIN_INCREMENT * 5);
+  const mediumBid = Math.min(maxBid, nextBid + AUCTION_MIN_INCREMENT * 2);
+  const highBid = Math.min(maxBid, nextBid + AUCTION_MIN_INCREMENT * 5);
 
   const actions: AuctionAction[] = [{ type: "auction.pass" }];
 
@@ -324,7 +328,7 @@ function listAuctionActions(publicState: AuctionPublicState): AuctionAction[] {
     if (
       Number.isInteger(amount) &&
       amount >= nextBid &&
-      amount <= AUCTION_MAX_BID &&
+      amount <= maxBid &&
       !actions.some(
         (candidate) => candidate.type === "auction.bid" && candidate.amount === amount,
       )

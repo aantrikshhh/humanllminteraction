@@ -49,7 +49,7 @@ export default async function VaultGamePage() {
             <p className={styles.lede}>
               {vaultBrief.summary} Each seat decides privately how much to keep, the room sees only
               the pooled return, and then everyone has to name the weakest contributor without any
-              human-or-LLM badge to lean on. That makes Vault one of the cleanest ARENA games for
+              human-or-LLM badge to lean on. That makes Vault one of the cleanest Turing Games for
               measuring generosity, suspicion, and consensus pressure at the same time.
             </p>
 

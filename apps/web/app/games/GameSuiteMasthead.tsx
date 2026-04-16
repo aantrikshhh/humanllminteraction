@@ -34,7 +34,7 @@ export function GameSuiteMasthead({
         <div className={styles.iconPanel}>
           <div className={styles.iconFrame}>{entry.icon}</div>
           <div className={styles.iconCopy}>
-            <p className={styles.kicker}>ARENA game suite</p>
+            <p className={styles.kicker}>Turing Games suite</p>
             <h1 className={styles.title}>{entry.name}</h1>
             <p className={styles.tagline}>{entry.strapline}</p>
           </div>
@@ -66,7 +66,7 @@ export function GameSuiteMasthead({
         </Link>
       </div>
 
-      <nav className={styles.nav} aria-label="ARENA games">
+      <nav className={styles.nav} aria-label="Turing Games">
         {gameSuiteEntries.map((candidate) => (
           <Link
             key={candidate.key}

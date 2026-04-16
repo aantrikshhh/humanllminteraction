@@ -21,7 +21,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
     <main className="app-shell">
       <div className="shell stack">
         <div className="topbar topbar-app">
-          <div className="brand">ARENA</div>
+          <div className="brand">Turing Games</div>
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>

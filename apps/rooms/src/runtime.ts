@@ -623,6 +623,9 @@ export class InMemoryRoomRuntime {
   }
 
   private toPublicRoomState<TPublicState>(room: RoomRecord<TPublicState, unknown>): PublicRoomState<TPublicState> {
+    const syncedPublicState = syncProjectedPublicState(room);
+    const projectedSeats = extractProjectedSeatViews(syncedPublicState);
+    const scoreBySeatId = room.result?.seatScores ?? {};
     const publicResult: PublicMatchResultSummary | undefined = room.result
       ? {
           completedAt: room.result.completedAt,
@@ -654,8 +657,25 @@ export class InMemoryRoomRuntime {
       game: room.game,
       phase: room.phase,
       round: room.round,
-      seats: room.seats.map((seat) => ({ ...seat.publicSeat })),
-      publicState: room.publicState,
+      seats: room.seats.map((seat) => {
+        const projectedSeat = projectedSeats.get(seat.publicSeat.seatId);
+        const resultScore = scoreBySeatId[seat.publicSeat.seatId];
+
+        return {
+          ...seat.publicSeat,
+          displayName: projectedSeat?.displayName ?? seat.publicSeat.displayName,
+          avatarId: projectedSeat?.avatarId ?? seat.publicSeat.avatarId,
+          isConnected: projectedSeat?.isConnected ?? seat.publicSeat.isConnected,
+          isReady: projectedSeat?.isReady ?? seat.publicSeat.isReady,
+          score:
+            typeof resultScore === "number"
+              ? resultScore
+              : typeof projectedSeat?.score === "number"
+                ? projectedSeat.score
+                : seat.publicSeat.score,
+        };
+      }),
+      publicState: syncedPublicState,
       lastEventAt: room.updatedAt,
       publicResult,
       replaySummary,
@@ -779,4 +799,70 @@ function deriveRoomCounter(publicState: unknown): number {
 
 function isJoinablePhase(phase: RoomPhase): boolean {
   return phase === "lobby" || phase === "ready";
+}
+
+function syncProjectedPublicState<TPublicState>(
+  room: RoomRecord<TPublicState, unknown>,
+): TPublicState {
+  if (!room.publicState || typeof room.publicState !== "object") {
+    return room.publicState;
+  }
+
+  const publicState = room.publicState as Record<string, unknown>;
+  const projectedSeats = publicState.seats;
+  if (!Array.isArray(projectedSeats)) {
+    return room.publicState;
+  }
+
+  const seatLookup = new Map(
+    room.seats.map((seat) => [seat.publicSeat.seatId, seat.publicSeat] as const),
+  );
+
+  return {
+    ...publicState,
+    seats: projectedSeats.map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return entry;
+      }
+
+      const seatView = entry as Record<string, unknown>;
+      const seatId = typeof seatView.seatId === "string" ? seatView.seatId : undefined;
+      const sourceSeat = seatId ? seatLookup.get(seatId) : undefined;
+      if (!sourceSeat) {
+        return entry;
+      }
+
+      return {
+        ...seatView,
+        displayName: sourceSeat.displayName,
+        avatarId: sourceSeat.avatarId,
+        isConnected: sourceSeat.isConnected,
+        isReady: sourceSeat.isReady,
+      };
+    }),
+  } as TPublicState;
+}
+
+function extractProjectedSeatViews(
+  publicState: unknown,
+): Map<SeatId, Partial<PublicSeatView>> {
+  if (!publicState || typeof publicState !== "object") {
+    return new Map();
+  }
+
+  const projectedSeats = (publicState as Record<string, unknown>).seats;
+  if (!Array.isArray(projectedSeats)) {
+    return new Map();
+  }
+
+  return new Map(
+    projectedSeats.flatMap((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return [];
+      }
+
+      const seatView = entry as Partial<PublicSeatView> & { seatId?: string };
+      return typeof seatView.seatId === "string" ? [[seatView.seatId, seatView] as const] : [];
+    }),
+  );
 }

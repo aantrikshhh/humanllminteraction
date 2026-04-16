@@ -11,16 +11,16 @@ const seatStrip = [
 
 const gameplaySteps = [
   {
-    label: "1. Enter a room",
-    copy: "Spawn a live match from the lobby or join an existing room without revealing which seats are model-backed.",
+    label: "1. Launch a room",
+    copy: "Start from the lobby, open a live match, and bring a real person into a table where every occupied seat stays ambiguous.",
   },
   {
     label: "2. Claim a mask",
-    copy: "Seats stay identity-blinded. You see readiness, pressure, and outcomes, not whether an opponent is human or LLM.",
+    copy: "You can see readiness, turn pressure, and outcomes, but the room never labels which opponents are human or LLM-backed.",
   },
   {
-    label: "3. Settle the match",
-    copy: "Every room produces replayable results, ranking impact, and payout follow-through for the winning masks.",
+    label: "3. Follow the result",
+    copy: "Each completed room flows into a replayable result page, rating movement, and a payout stub for the winning masks.",
   },
 ];
 
@@ -58,9 +58,9 @@ const gameStrip = [
 ];
 
 const proofPoints = [
-  "Real multiplayer room flow with claim, ready, act, settle, and replay.",
-  "Hidden human-or-LLM seats with public/private data boundaries.",
-  "Leaderboard and payment stub follow-through after room completion.",
+  "Live room flow from launch to claim, ready, act, result, and replay.",
+  "Seat-blinded multiplayer where humans and LLMs share the same public room language.",
+  "Leaderboard and payout follow-through after the room closes.",
 ];
 
 export default function MarketingHomePage() {
@@ -73,7 +73,7 @@ export default function MarketingHomePage() {
         <div className={styles.frame}>
           <header className={styles.topbar}>
             <div className={styles.brandBlock}>
-              <span className={styles.brand}>ARENA</span>
+              <span className={styles.brand}>Turing Games</span>
               <span className={styles.brandCaption}>Hidden-seat multiplayer benchmark</span>
             </div>
 
@@ -90,10 +90,10 @@ export default function MarketingHomePage() {
               <p className={styles.kicker}>Blinded human x LLM matches</p>
               <h1 className={styles.headline}>Play the room, not the label.</h1>
               <p className={styles.subcopy}>
-                ARENA is a live multiplayer game site where every occupied seat may be controlled
+                Turing Games is a live multiplayer game site where every occupied seat may be controlled
                 by a person or an LLM and the room never tells you which is which. The current MVP
-                is built around social-strategy matches that generate watchable decisions and clean
-                behavioral telemetry.
+                is built around social-strategy matches that are easy to watch, easy to explain,
+                and strong enough to benchmark hidden-seat play.
               </p>
 
               <div className={styles.ctaRow}>
@@ -159,7 +159,7 @@ export default function MarketingHomePage() {
         <div className={styles.frame}>
           <div className={styles.sectionIntro}>
             <p className={styles.sectionKicker}>How it works</p>
-            <h2>One path. One live room. No operational clutter.</h2>
+            <h2>One clear MVP loop from room launch to result.</h2>
           </div>
 
           <div className={styles.steps}>
@@ -178,11 +178,11 @@ export default function MarketingHomePage() {
           <div className={styles.featureGrid}>
             <div className={styles.featureCopy}>
               <p className={styles.sectionKicker}>Flagship slice</p>
-              <h2>Auction is the fastest way to understand the product.</h2>
+              <h2>Auction is the fastest room to understand on camera.</h2>
               <p>
                 It is obviously multiplayer, easy to spectate, and expressive enough to make the
-                hidden-seat premise immediately legible in a short demo. For the current MVP, this
-                is the strongest room to show on camera first.
+                hidden-seat premise immediately legible in a short demo. If you only show one room
+                in the MVP, show this one first.
               </p>
               <div className={styles.inlineActions}>
                 <Link className={styles.secondaryCta} href="/lobby">
@@ -216,7 +216,7 @@ export default function MarketingHomePage() {
         <div className={styles.frame}>
           <div className={styles.sectionIntro}>
             <p className={styles.sectionKicker}>Game lineup</p>
-            <h2>The first five rooms share one hidden-seat language.</h2>
+            <h2>Five room formats, one shared hidden-seat language.</h2>
           </div>
 
           <div className={styles.gameStrip}>
@@ -236,7 +236,7 @@ export default function MarketingHomePage() {
           <div className={styles.finalBand}>
             <div>
               <p className={styles.sectionKicker}>Ready to record</p>
-              <h2>Launch a room, claim a mask, and let the hidden seats answer back.</h2>
+              <h2>Open the lobby, start a room, and let the hidden table answer back.</h2>
             </div>
             <div className={styles.inlineActions}>
               <Link className={styles.primaryCta} href="/lobby">

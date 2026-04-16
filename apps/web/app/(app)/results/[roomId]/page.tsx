@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import type { ReplayEvent } from "@arena/contracts";
+import type { PublicMatchResultSummary, PublicRoomState, PublicSeatView, ReplayEvent } from "@arena/contracts";
 
 import {
   formatScore,
@@ -37,7 +37,7 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
       <main className="app-shell">
         <div className="shell stack">
           <div className="topbar topbar-app">
-          <div className="brand">ARENA</div>
+          <div className="brand">Turing Games</div>
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
@@ -54,7 +54,7 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                 <div>
                   <h1>Result room unavailable</h1>
                   <p className="muted">
-                    The room record could not be loaded from the local rooms runtime.
+                    This result page could not load a room record from the current runtime.
                   </p>
                 </div>
                 <Link className="button" href="/results">
@@ -69,26 +69,32 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
   }
 
   const ledger = snapshot.matchLedger;
-  const orderedSeats = [...room.seats].sort((left, right) => {
-    return (right.score ?? 0) - (left.score ?? 0);
-  });
   const publicResult = ledger?.publicResult ?? room.publicResult;
+  const orderedSeats = buildOrderedSeats(room, publicResult);
   const matchSync = ledger?.matchSync ?? room.matchSync;
   const winningSeatIds = publicResult?.winningSeatIds ?? [];
   const winningScore =
-    publicResult?.winningSeatIds.length && publicResult.seatScores
+    snapshot.state === "completed" && publicResult?.winningSeatIds.length && publicResult.seatScores
       ? Math.max(
           ...publicResult.winningSeatIds.map((seatId) => publicResult?.seatScores[seatId] ?? 0),
         )
-      : (orderedSeats[0]?.score ?? 0);
+      : snapshot.state === "completed"
+        ? (orderedSeats[0]?.score ?? 0)
+        : undefined;
   const winners =
-    winningSeatIds.length > 0
+    snapshot.state !== "completed"
+      ? []
+      : winningSeatIds.length > 0
       ? orderedSeats.filter((seat) => winningSeatIds.includes(seat.seatId))
-      : orderedSeats.filter((seat) => (seat.score ?? 0) === winningScore);
+      : orderedSeats.filter((seat) => (seat.score ?? 0) === (winningScore ?? 0));
   const replayEvents = snapshot.replay?.events ?? [];
   const lastEvents = replayEvents.slice(-4).reverse();
   const leadMargin =
-    orderedSeats.length > 1 ? winningScore - (orderedSeats[1]?.score ?? 0) : winningScore;
+    typeof winningScore === "number"
+      ? orderedSeats.length > 1
+        ? winningScore - (orderedSeats[1]?.score ?? 0)
+        : winningScore
+      : 0;
   const projectedPrize = ledger?.payments?.totalPayoutUsd ?? getProjectedPrizeUsd(room.game);
   const winnerPayouts = ledger?.seatImpacts.filter((impact) => impact.isWinner && impact.payout);
   const payoutSplit =
@@ -104,15 +110,15 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
   const phaseMessage =
     snapshot.state === "completed"
       ? snapshot.isPreview
-        ? "Previewing a seeded completed room because no live result was available."
-        : "Completed room loaded from the local runtime. Public identities remain seat-blinded."
-      : "This room exists, but it has not finalized yet. The page is holding the public result layout until a terminal room state lands.";
+        ? "Showing a seeded completed room because no live result was available yet."
+        : "Completed room loaded successfully. Public outcomes are visible, but seat identities stay withheld."
+      : "This room is live, but the final public result has not landed yet. Keep the page open and it can become the post-match view as soon as the room settles.";
 
   return (
     <main className="app-shell">
       <div className="shell stack">
         <div className="topbar topbar-app">
-          <div className="brand">ARENA</div>
+          <div className="brand">Turing Games</div>
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
@@ -167,8 +173,8 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                     </h2>
                     <div className={styles.heroText}>
                       {snapshot.state === "completed"
-                        ? "Public post-match surfaces stay seat-based by design. Standings, replays, ladder sync, and payouts can all resolve without exposing which seats were model-backed."
-                        : "The room runtime is reachable, but the room has not emitted a final public result yet. This page stays read-only and can render as soon as the room enters the results phase."}
+                        ? "This page is designed to stay public and seat-based. Standings, replay access, ladder movement, and payouts can all remain legible without revealing which seats were model-backed."
+                        : "The room is reachable, but the match has not emitted a final public result yet. This surface stays read-only until the room enters the results phase."}
                     </div>
                     <div className={styles.winnerStrip}>
                       <span className={styles.winnerBadge}>Match {room.matchId.slice(0, 12)}</span>
@@ -198,7 +204,7 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                 <div className={styles.callout}>
                   <span className={styles.calloutLabel}>Top finish</span>
                   <strong className={styles.calloutValue}>
-                    {winners.map((seat) => seat.displayName).join(", ")}
+                    {winners.length > 0 ? winners.map((seat) => seat.displayName).join(", ") : "Pending"}
                   </strong>
                 </div>
                 <div className={styles.callout}>
@@ -219,9 +225,9 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
 
               <div className="section-row">
                 <div>
-                  <h2>Continue through the operator loop</h2>
+                  <h2>Continue through the MVP flow</h2>
                   <p className="muted">
-                    Move between the live room, result index, ladder, and payout surface without
+                    Move between the live room, result index, leaderboard, and payments view without
                     losing the room context.
                   </p>
                 </div>
@@ -232,10 +238,10 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                   <Link className="button" href="/results">
                     Result index
                   </Link>
-                  <Link className="button" href="/leaderboard">
+                  <Link className="button" href={`/leaderboard?roomId=${encodeURIComponent(room.roomId)}`}>
                     Leaderboard
                   </Link>
-                  <Link className="button" href="/payments">
+                  <Link className="button" href={`/payments?roomId=${encodeURIComponent(room.roomId)}`}>
                     Payments
                   </Link>
                 </div>
@@ -246,7 +252,7 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                   <div>
                     <h2>Final standings</h2>
                     <p className="muted">
-                      The public result stays seat-based even after the room closes.
+                      Seat names remain public, while the controller behind each seat stays hidden.
                     </p>
                   </div>
                   <span className="pill subtle">{labelGame(room.game)}</span>
@@ -284,7 +290,7 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                   <div>
                     <h2>Replay availability</h2>
                     <p className="muted">
-                      Replays can stay public because they are driven by seat ids and public events.
+                      Replays stay public because they are driven by seat ids and public actions, not identity reveal.
                     </p>
                   </div>
                   {replayUrl ? (
@@ -302,8 +308,8 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                     <div className="panel panel-subtle">
                       <strong>Replay not attached yet</strong>
                       <p className="muted">
-                        The public result page can render without a replay, but the room runtime
-                        still needs to expose a completed-room replay for audit and demo playback.
+                        The result page can render before a replay is attached. Once the room export
+                        lands, this panel becomes the public audit trail for the match.
                       </p>
                     </div>
                   )}
@@ -317,7 +323,7 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
               <div className="panel">
                 <div className="section-row">
                   <h2>Leaderboard impact</h2>
-                  <span className="pill subtle">{ledger ? "Live" : "Placeholder"}</span>
+                  <span className="pill subtle">{ledger ? "Live" : "Pending export"}</span>
                 </div>
                 <div className={styles.placeholderBlock}>
                   {ledger
@@ -329,7 +335,7 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                           <span className={styles.supportCopy}>
                             {impact.leaderboard
                               ? `${impact.leaderboard.delta >= 0 ? "+" : ""}${impact.leaderboard.delta} rating · now ${impact.leaderboard.newRating} · ${impact.leaderboard.wins} wins`
-                              : "No leaderboard delta recorded for this seat yet."}
+                              : "Rating movement has not been written for this seat yet."}
                           </span>
                         </div>
                       ))
@@ -339,8 +345,8 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                             {index + 1}. {seat.displayName}
                           </strong>
                           <span className={styles.supportCopy}>
-                            Public seat results are ready. Match-level rating deltas need a dedicated
-                            API read surface keyed by room or match.
+                            Public seat results are ready. Rating movement will appear here when the
+                            room finishes exporting its leaderboard delta.
                           </span>
                         </div>
                       ))}
@@ -350,13 +356,13 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
               <div className="panel">
                 <div className="section-row">
                   <h2>Payout summary</h2>
-                  <span className="pill subtle">{ledger?.payments ? "Live" : "Placeholder"}</span>
+                  <span className="pill subtle">{ledger?.payments ? "Live" : "Pending export"}</span>
                 </div>
                 <div className={styles.placeholderBlock}>
                   <div className={styles.placeholderStat}>
                     <strong>Prize pool {formatUsd(projectedPrize)}</strong>
                     <span className={styles.supportCopy}>
-                      Estimated from the current game’s demo escrow policy.
+                      Estimated from the current MVP payout rule for this game.
                     </span>
                   </div>
                   <div className={styles.placeholderStat}>
@@ -366,7 +372,7 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                     <span className={styles.supportCopy}>
                       {ledger?.payments
                         ? `Escrow ${ledger.payments.escrowId} settled ${formatTimestamp(ledger.payments.settledAt)}.`
-                        : "The public UI can show totals, but a match-level payout lookup is still needed to replace this placeholder with live settlement state."}
+                        : "Settlement details will appear here once the room exports its payout record."}
                     </span>
                   </div>
                   {ledger?.seatImpacts
@@ -386,12 +392,12 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
 
               <div className="panel">
                 <div className="section-row">
-                  <h2>Hidden-seat policy</h2>
+                  <h2>Why identities stay hidden</h2>
                   <span className="pill accent">No reveal</span>
                 </div>
                 <p className={styles.supportCopy}>
                   This result view deliberately avoids revealing which seats were human, LLM, or
-                  scripted. Public outcomes stay useful without collapsing the core premise.
+                  scripted. Public outcomes stay useful without collapsing the core premise of the room.
                 </p>
               </div>
             </div>
@@ -415,4 +421,42 @@ function TimelineItem({ event }: { event: ReplayEvent }) {
       <div className={styles.timelineTime}>{formatTimestamp(event.occurredAt)}</div>
     </div>
   );
+}
+
+function buildOrderedSeats(
+  room: PublicRoomState,
+  publicResult?: PublicMatchResultSummary,
+): PublicSeatView[] {
+  const publicStateScores = new Map<string, number>();
+  const projectedSeats = Array.isArray((room.publicState as { seats?: unknown[] } | null)?.seats)
+    ? ((room.publicState as { seats: unknown[] }).seats ?? [])
+    : [];
+
+  for (const entry of projectedSeats) {
+    if (!entry || typeof entry !== "object") {
+      continue;
+    }
+
+    const seatView = entry as { seatId?: unknown; score?: unknown };
+    if (typeof seatView.seatId === "string" && typeof seatView.score === "number") {
+      publicStateScores.set(seatView.seatId, seatView.score);
+    }
+  }
+
+  return room.seats
+    .map((seat) => ({
+      ...seat,
+      score:
+        publicResult?.seatScores[seat.seatId] ??
+        publicStateScores.get(seat.seatId) ??
+        seat.score,
+    }))
+    .sort((left, right) => {
+      const scoreDelta = (right.score ?? 0) - (left.score ?? 0);
+      if (scoreDelta !== 0) {
+        return scoreDelta;
+      }
+
+      return left.seatId.localeCompare(right.seatId);
+    });
 }

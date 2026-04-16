@@ -15,6 +15,7 @@ import {
   AUCTION_MAX_BID,
   AUCTION_MIN_INCREMENT,
   type AuctionAction,
+  type AuctionSeatPublicView,
   type AuctionPublicState,
 } from "@arena/game-auction";
 import type { PactAction, PactPublicState } from "@arena/game-pact";
@@ -38,6 +39,12 @@ interface RoomPageClientProps {
 interface RoomMutationEnvelope {
   room: PublicRoomState;
   session: PlayerSession | null;
+}
+
+interface AuctionRuleCard {
+  label: string;
+  value: string;
+  detail: string;
 }
 
 type RoomAction = AuctionAction | SplitAction | PactAction | VaultAction | SettlementAction;
@@ -119,6 +126,10 @@ function formatSeatScore(seat: PublicSeatView): string {
   return typeof seat.score === "number" ? `${seat.score} pts` : "score hidden";
 }
 
+function formatAuctionSeatLine(seat: AuctionSeatPublicView): string {
+  return `${seat.bankroll} bank · ${seat.committedBid} committed · ${seat.totalValueWon} won`;
+}
+
 function describeSeatState(
   seat: PublicSeatView,
   roomPhase: PublicRoomState["phase"],
@@ -189,6 +200,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
   const [session, setSession] = useState<PlayerSession | null>(null);
+  const [isMutating, setIsMutating] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [splitOfferAmount, setSplitOfferAmount] = useState(50);
   const [vaultContributionAmount, setVaultContributionAmount] = useState(0);
@@ -203,55 +215,107 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
   const pactState = isPactRoom(room) ? room.publicState : null;
   const vaultState = isVaultRoom(room) ? room.publicState : null;
   const settlementState = isSettlementRoom(room) ? room.publicState : null;
+  const roomIsPlayable = room.phase === "ready" || room.phase === "active";
 
   const ownedSeat = session?.seatId
     ? room.seats.find((seat) => seat.seatId === session.seatId) ?? null
     : null;
 
+  const auctionOwnedSeat =
+    auctionState && session?.seatId
+      ? auctionState.seats.find((seat) => seat.seatId === session.seatId) ?? null
+      : null;
+
   const openSeatCount = room.joinState?.openSeatIds.length
     ?? room.seats.filter((seat) => !seat.isConnected && !seat.isReady).length;
 
   const auctionCanAct =
-    room.phase !== "results" &&
+    roomIsPlayable &&
     auctionState?.phase === "bidding" &&
     Boolean(ownedSeat) &&
+    Boolean(ownedSeat?.isReady) &&
     auctionState.currentTurnSeatId === ownedSeat?.seatId;
 
   const splitCanAct = Boolean(
     ownedSeat &&
       splitState &&
-      room.phase !== "results" &&
+      roomIsPlayable &&
+      ownedSeat.isReady &&
       ((splitState.phase === "offer" && splitState.proposerSeatId === ownedSeat.seatId) ||
         (splitState.phase === "response" && splitState.responderSeatId === ownedSeat.seatId)),
   );
 
   const pactCanAct = Boolean(
-    ownedSeat && pactState && room.phase !== "results" && pactState.phase === "choice_window",
+    ownedSeat && pactState && roomIsPlayable && ownedSeat.isReady && pactState.phase === "choice_window",
   );
 
   const vaultCanAct = Boolean(
-    ownedSeat && vaultState && room.phase !== "results" && vaultState.phase !== "match_complete",
+    ownedSeat &&
+      vaultState &&
+      roomIsPlayable &&
+      ownedSeat.isReady &&
+      vaultState.phase !== "match_complete",
   );
 
   const settlementCanAct = Boolean(
     ownedSeat &&
       settlementState &&
-      room.phase !== "results" &&
+      roomIsPlayable &&
+      ownedSeat.isReady &&
       settlementState.phase !== "settled" &&
       settlementState.currentTurnSeatId === ownedSeat.seatId,
   );
+
+  const isBusy = isMutating || isPending;
 
   const auctionBidPresets = useMemo(() => {
     if (!auctionState) {
       return [];
     }
 
+    const maxAffordableBid = Math.min(
+      AUCTION_MAX_BID,
+      auctionOwnedSeat?.bankroll ?? auctionState.startingBankroll,
+    );
     const nextBid = auctionState.currentBid + AUCTION_MIN_INCREMENT;
+    if (nextBid > maxAffordableBid) {
+      return [];
+    }
+
     return [
       nextBid,
-      Math.min(AUCTION_MAX_BID, nextBid + 2),
-      Math.min(AUCTION_MAX_BID, Math.max(nextBid, Math.ceil(AUCTION_MAX_BID * 0.75))),
-    ].filter((amount, index, values) => amount <= AUCTION_MAX_BID && values.indexOf(amount) === index);
+      Math.min(maxAffordableBid, nextBid + AUCTION_MIN_INCREMENT * 2),
+      maxAffordableBid,
+    ].filter((amount, index, values) => amount <= maxAffordableBid && values.indexOf(amount) === index);
+  }, [auctionOwnedSeat?.bankroll, auctionState]);
+
+  const auctionRuleCards = useMemo<AuctionRuleCard[]>(() => {
+    if (!auctionState) {
+      return [];
+    }
+
+    return [
+      {
+        label: "Starting stack",
+        value: `${auctionState.startingBankroll} credits`,
+        detail: "That bankroll carries across the whole match. Spend early and you have less leverage in later rounds.",
+      },
+      {
+        label: "Prize ladder",
+        value: auctionState.prizeValues.join(" / "),
+        detail: `Round ${auctionState.currentRound} is playing for ${auctionState.currentRoundPrizeValue} credits right now.`,
+      },
+      {
+        label: "Raise rule",
+        value: `+${AUCTION_MIN_INCREMENT} minimum, ${AUCTION_MAX_BID} round cap`,
+        detail: "On your turn you either raise this round's total bid or pass out of this round only.",
+      },
+      {
+        label: "Winning score",
+        value: "prizes won - credits spent",
+        detail: `${auctionState.totalRounds} rounds total. Final winner is the seat with the best net score after bankroll and prizes are both accounted for.`,
+      },
+    ];
   }, [auctionState]);
 
   const splitOfferPresets = useMemo(() => {
@@ -404,21 +468,26 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
     payload: Record<string, unknown>,
     fallbackSession: PlayerSession | null = session,
   ) => {
-    const response = await fetch(path, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json; charset=utf-8",
-      },
-      body: JSON.stringify(payload),
-    });
+    setIsMutating(true);
+    try {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text || `request failed with status ${response.status}`);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `request failed with status ${response.status}`);
+      }
+
+      const nextPayload = await response.json();
+      applyMutation(parseMutationEnvelope(nextPayload), fallbackSession);
+    } finally {
+      setIsMutating(false);
     }
-
-    const nextPayload = await response.json();
-    applyMutation(parseMutationEnvelope(nextPayload), fallbackSession);
   };
 
   const handleJoin = async (event: FormEvent<HTMLFormElement>) => {
@@ -486,6 +555,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
       return;
     }
 
+    setIsMutating(true);
     try {
       const response = await fetch(`/api/rooms/${room.roomId}/messages`, {
         method: "POST",
@@ -514,6 +584,8 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
       });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "could not submit action");
+    } finally {
+      setIsMutating(false);
     }
   };
 
@@ -526,7 +598,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
   const stageMetrics = buildStageMetrics(room, openSeatCount, ownedSeat);
   const focusTitle = describePrimaryInstruction(room, {
     hasSession: Boolean(session),
-    ownedSeatId: ownedSeat?.seatId,
+    ownedSeat,
   });
 
   return (
@@ -559,7 +631,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
               </Link>
               <button
                 className="button"
-                disabled={isPending}
+                disabled={isBusy}
                 onClick={() => window.location.reload()}
                 type="button"
               >
@@ -595,7 +667,9 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
             <div className={styles.focusGrid}>
               <article className={styles.focusCard}>
                 <span className={styles.focusEyebrow}>Now</span>
-                <strong className={styles.focusHeadline}>{describeActionStatus(room, ownedSeat?.seatId)}</strong>
+                <strong className={styles.focusHeadline}>
+                  {describeActionStatus(room, ownedSeat?.seatId, ownedSeat)}
+                </strong>
                 <p className="muted">{describePosterState(room, ownedSeat?.seatId)}</p>
               </article>
 
@@ -631,7 +705,10 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                 const isOpen = room.joinState?.openSeatIds.includes(seat.seatId)
                   ?? (!seat.isConnected && !seat.isReady);
                 const isCurrentTurn = getCurrentTurnSeatId(room) === seat.seatId;
-                const isLeader = isAuctionRoom(room) && room.publicState.currentLeaderSeatId === seat.seatId;
+                const isLeader =
+                  roomIsPlayable && isAuctionRoom(room) && room.publicState.currentLeaderSeatId === seat.seatId;
+                const auctionSeatState =
+                  auctionState?.seats.find((candidate) => candidate.seatId === seat.seatId) ?? null;
 
                 return (
                   <article
@@ -672,11 +749,13 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                     </div>
 
                     <div className={styles.seatStats}>
-                      <span>{formatSeatScore(seat)}</span>
+                      <span>{auctionSeatState ? formatAuctionSeatLine(auctionSeatState) : formatSeatScore(seat)}</span>
                       {isCurrentTurn ? (
                         <strong className={styles.turnSignal}>Acting now</strong>
                       ) : isLeader ? (
-                        <strong className={styles.leaderSignal}>Leading</strong>
+                        <strong className={styles.leaderSignal}>
+                          {auctionState ? `Leading r${auctionState.currentRound}` : "Leading"}
+                        </strong>
                       ) : isOpen ? (
                         <strong>Claimable</strong>
                       ) : (
@@ -687,7 +766,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                     {!ownedSeat && isOpen && session ? (
                       <button
                         className={`button ${styles.claimButton}`}
-                        disabled={isPending}
+                        disabled={isBusy}
                         onClick={() => void handleClaimSeat(seat.seatId)}
                         type="button"
                       >
@@ -728,7 +807,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                       value={displayName}
                     />
                   </label>
-                  <button className="button primary" disabled={isPending} type="submit">
+                  <button className="button primary" disabled={isBusy} type="submit">
                     Join room
                   </button>
                 </form>
@@ -762,7 +841,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                       <div className={styles.readyRail}>
                         <button
                           className="button primary"
-                          disabled={isPending || ownedSeat.isReady}
+                          disabled={isBusy || ownedSeat.isReady}
                           onClick={() => void handleReadyToggle(true)}
                           type="button"
                         >
@@ -770,7 +849,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                         </button>
                         <button
                           className="button"
-                          disabled={isPending || !ownedSeat.isReady}
+                          disabled={isBusy || !ownedSeat.isReady}
                           onClick={() => void handleReadyToggle(false)}
                           type="button"
                         >
@@ -800,18 +879,36 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
               </div>
 
               <div className={`panel panel-subtle ${styles.turnPanel}`}>
-                <strong>{describeActionStatus(room, ownedSeat?.seatId)}</strong>
+                <strong>{describeActionStatus(room, ownedSeat?.seatId, ownedSeat)}</strong>
                 <p className="muted">
                   Everyone sees room state and scores. Nobody sees which occupied masks are human.
                 </p>
               </div>
 
               {auctionState ? (
+                <div className={`panel panel-subtle ${styles.rulesPanel}`}>
+                  <div className={styles.rulesHeader}>
+                    <strong>Auction rules at a glance</strong>
+                    <span className="pill subtle">Readable economy</span>
+                  </div>
+                  <div className={styles.rulesGrid}>
+                    {auctionRuleCards.map((rule) => (
+                      <article className={styles.ruleCard} key={rule.label}>
+                        <span>{rule.label}</span>
+                        <strong>{rule.value}</strong>
+                        <p className="muted">{rule.detail}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {auctionState ? (
                 <div className={styles.actionGrid}>
                   {auctionBidPresets.map((amount) => (
                     <button
                       className="button primary"
-                      disabled={!auctionCanAct}
+                      disabled={!auctionCanAct || isBusy}
                       key={amount}
                       onClick={() => void sendAction({ type: "auction.bid", amount })}
                       type="button"
@@ -821,20 +918,20 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                   ))}
                   <button
                     className="button"
-                    disabled={!auctionCanAct}
+                    disabled={!auctionCanAct || auctionBidPresets.length === 0 || isBusy}
                     onClick={() =>
                       void sendAction({
                         type: "auction.bid",
-                        amount: AUCTION_MAX_BID,
+                        amount: auctionBidPresets[auctionBidPresets.length - 1] ?? AUCTION_MAX_BID,
                       })
                     }
                     type="button"
                   >
-                    Push to max
+                    Push to max round bid
                   </button>
                   <button
                     className="button"
-                    disabled={!auctionCanAct}
+                    disabled={!auctionCanAct || isBusy}
                     onClick={() => void sendAction({ type: "auction.pass" })}
                     type="button"
                   >
@@ -875,7 +972,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                       </div>
                       <button
                         className="button primary"
-                        disabled={!splitCanAct}
+                        disabled={!splitCanAct || isBusy}
                         onClick={() =>
                           void sendAction({
                             type: "split.offer",
@@ -891,7 +988,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                     <div className={styles.choiceRail}>
                       <button
                         className="button primary"
-                        disabled={!splitCanAct}
+                        disabled={!splitCanAct || isBusy}
                         onClick={() => void sendAction({ type: "split.accept" })}
                         type="button"
                       >
@@ -899,7 +996,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                       </button>
                       <button
                         className="button"
-                        disabled={!splitCanAct}
+                        disabled={!splitCanAct || isBusy}
                         onClick={() => void sendAction({ type: "split.reject" })}
                         type="button"
                       >
@@ -914,7 +1011,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                 <div className={styles.choiceRail}>
                   <button
                     className="button primary"
-                    disabled={!pactCanAct}
+                    disabled={!pactCanAct || isBusy}
                     onClick={() => void sendAction({ type: "pact.choose", choice: "cooperate" })}
                     type="button"
                   >
@@ -922,7 +1019,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                   </button>
                   <button
                     className="button"
-                    disabled={!pactCanAct}
+                    disabled={!pactCanAct || isBusy}
                     onClick={() => void sendAction({ type: "pact.choose", choice: "betray" })}
                     type="button"
                   >
@@ -950,7 +1047,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                         {vaultContributionPresets.map((amount) => (
                           <button
                             className="button"
-                            disabled={!vaultCanAct}
+                            disabled={!vaultCanAct || isBusy}
                             key={amount}
                             onClick={() => setVaultContributionAmount(amount)}
                             type="button"
@@ -961,7 +1058,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                       </div>
                       <button
                         className="button primary"
-                        disabled={!vaultCanAct}
+                        disabled={!vaultCanAct || isBusy}
                         onClick={() =>
                           void sendAction({
                             type: "vault.contribute",
@@ -983,7 +1080,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                         .map((seat) => (
                           <button
                             className="button"
-                            disabled={!vaultCanAct}
+                            disabled={!vaultCanAct || isBusy}
                             key={seat.seatId}
                             onClick={() =>
                               void sendAction({
@@ -1034,7 +1131,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                       </label>
                       <button
                         className="button primary"
-                        disabled={!settlementCanAct}
+                        disabled={!settlementCanAct || isBusy}
                         onClick={() =>
                           void sendAction({
                             type: "settlement.pledge",
@@ -1062,7 +1159,7 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
                       </label>
                       <button
                         className="button primary"
-                        disabled={!settlementCanAct}
+                        disabled={!settlementCanAct || isBusy}
                         onClick={() =>
                           void sendAction({
                             type: "settlement.commit",
@@ -1148,6 +1245,10 @@ export default function RoomPageClient({ initialRoom, initialSource }: RoomPageC
 }
 
 function getCurrentTurnSeatId(room: PublicRoomState): string | undefined {
+  if (room.phase === "lobby") {
+    return undefined;
+  }
+
   if (isAuctionRoom(room)) {
     return room.publicState.currentTurnSeatId;
   }
@@ -1166,8 +1267,20 @@ function getCurrentTurnSeatId(room: PublicRoomState): string | undefined {
 }
 
 function describePosterState(room: PublicRoomState, ownedSeatId?: string): string {
+  if (room.phase === "lobby") {
+    return ownedSeatId
+      ? "Your mask is claimed, but the room is still waiting for every visible human mask to be claimed and marked ready before bidding should begin."
+      : "Join the room, claim one open mask, and get every visible human seat ready before the live match starts.";
+  }
+
+  if (room.phase === "ready") {
+    return ownedSeatId
+      ? "All visible human masks are ready. Your first legal action will open the live match."
+      : "All visible human masks are ready. The next player action will open the live match.";
+  }
+
   if (isAuctionRoom(room)) {
-    return `Bid ${room.publicState.currentBid}, pot ${room.publicState.currentPot}, ${room.publicState.turnsRemaining} turns left.`;
+    return `Round ${room.publicState.currentRound}/${room.publicState.totalRounds} · prize ${room.publicState.currentRoundPrizeValue} · bid ${room.publicState.currentBid}/${AUCTION_MAX_BID} · pot ${room.publicState.currentPot} · ${room.publicState.roundTurnsRemaining} round turns left.`;
   }
 
   if (isSplitRoom(room)) {
@@ -1190,6 +1303,18 @@ function describePosterState(room: PublicRoomState, ownedSeatId?: string): strin
 }
 
 function describePosterSubcopy(room: PublicRoomState, ownedSeatId?: string): string {
+  if (room.phase === "lobby") {
+    return ownedSeatId
+      ? "Joining a room and claiming a mask does not reveal which occupied seats are human or model-backed. Public play begins only after the visible human seats are ready."
+      : "You can see which masks are open to claim, but the room never labels whether occupied seats are human or LLM-backed.";
+  }
+
+  if (isAuctionRoom(room)) {
+    return ownedSeatId
+      ? `Each seat started with ${room.publicState.startingBankroll} credits. Passing only removes you from this round. Final standing is prizes won minus total credits spent across all ${room.publicState.totalRounds} rounds.`
+      : `Each seat starts with ${room.publicState.startingBankroll} credits, the room auctions ${room.publicState.totalRounds} prizes in sequence, and passing only removes a seat from the current round.`;
+  }
+
   if (isSplitRoom(room)) {
     return ownedSeatId
       ? "The proposer sets the responder share. The responder can accept or burn the pot."
@@ -1212,9 +1337,13 @@ function describePosterSubcopy(room: PublicRoomState, ownedSeatId?: string): str
 }
 
 function describeControlsCopy(room: PublicRoomState): string {
+  if (room.phase === "lobby") {
+    return "Controls unlock after the visible human masks are claimed and marked ready.";
+  }
+
   switch (room.game) {
     case "auction":
-      return "Actions unlock only when your claimed mask owns the live turn.";
+      return `When your mask owns the turn, raise this round's total bid by at least ${AUCTION_MIN_INCREMENT} credit or pass out of the current round. Your button amount is your full committed bid for this round, not an extra add-on.`;
     case "split":
       return "Offer when you are proposer. Accept or reject when you are responder.";
     case "pact":
@@ -1228,7 +1357,11 @@ function describeControlsCopy(room: PublicRoomState): string {
   }
 }
 
-function describeActionStatus(room: PublicRoomState, ownedSeatId?: string): string {
+function describeActionStatus(
+  room: PublicRoomState,
+  ownedSeatId?: string,
+  ownedSeat?: PublicSeatView | null,
+): string {
   if (!ownedSeatId) {
     return "Join and claim a mask to unlock room actions.";
   }
@@ -1237,10 +1370,22 @@ function describeActionStatus(room: PublicRoomState, ownedSeatId?: string): stri
     return "Match complete. Move into the result surface when you are ready.";
   }
 
+  if (!ownedSeat?.isReady) {
+    return "Claimed mask. Mark ready to enter.";
+  }
+
+  if (room.phase === "lobby") {
+    return "Waiting for the remaining visible human masks to claim and ready.";
+  }
+
+  if (room.phase === "ready") {
+    return "All visible human masks are ready. Your first move opens the match.";
+  }
+
   if (isAuctionRoom(room)) {
     return room.publicState.currentTurnSeatId === ownedSeatId
-      ? "Your bid is live."
-      : `Waiting on ${room.publicState.currentTurnSeatId ?? "the room"}.`;
+      ? `Your round ${room.publicState.currentRound} bid is live.`
+      : `Waiting on ${room.publicState.currentTurnSeatId ?? "the room"} in round ${room.publicState.currentRound}.`;
   }
 
   if (isSplitRoom(room)) {
@@ -1274,13 +1419,13 @@ function describeActionStatus(room: PublicRoomState, ownedSeatId?: string): stri
 
 function describePrimaryInstruction(
   room: PublicRoomState,
-  options: { hasSession: boolean; ownedSeatId?: string },
+  options: { hasSession: boolean; ownedSeat?: PublicSeatView | null },
 ): string {
   if (!options.hasSession) {
     return "Join the room to take a mask.";
   }
 
-  if (!options.ownedSeatId) {
+  if (!options.ownedSeat) {
     return "Claim one open mask to enter the match.";
   }
 
@@ -1288,7 +1433,7 @@ function describePrimaryInstruction(
     return "The room is settled.";
   }
 
-  return describeActionStatus(room, options.ownedSeatId);
+  return describeActionStatus(room, options.ownedSeat.seatId, options.ownedSeat);
 }
 
 function buildStageMetrics(
@@ -1296,6 +1441,30 @@ function buildStageMetrics(
   openSeatCount: number,
   ownedSeat: PublicSeatView | null,
 ): Array<{ label: string; value: string }> {
+  if (isAuctionRoom(room)) {
+    const auctionOwnedSeat =
+      ownedSeat ? room.publicState.seats.find((seat) => seat.seatId === ownedSeat.seatId) : null;
+
+    return [
+      {
+        label: "Round",
+        value: `${room.publicState.currentRound}/${room.publicState.totalRounds}`,
+      },
+      {
+        label: "Prize",
+        value: String(room.publicState.currentRoundPrizeValue),
+      },
+      {
+        label: auctionOwnedSeat ? "Your bankroll" : "Open masks",
+        value: auctionOwnedSeat ? String(auctionOwnedSeat.bankroll) : String(openSeatCount),
+      },
+      {
+        label: "Live pulse",
+        value: describeLivePulse(room),
+      },
+    ];
+  }
+
   return [
     {
       label: "Phase",
@@ -1317,8 +1486,12 @@ function buildStageMetrics(
 }
 
 function describeLivePulse(room: PublicRoomState): string {
+  if (room.phase === "lobby" || room.phase === "ready") {
+    return room.phase;
+  }
+
   if (isAuctionRoom(room)) {
-    return `${room.publicState.currentBid} bid`;
+    return `r${room.publicState.currentRound} · ${room.publicState.currentBid} bid`;
   }
 
   if (isSplitRoom(room)) {

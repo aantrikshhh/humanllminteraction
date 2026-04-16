@@ -58,6 +58,60 @@ test("syncCompletedRoomIfNeeded forwards a completed room into leaderboard and p
       type: "auction.pass",
     },
   });
+  runtime.handleClientMessage(room.roomId, {
+    type: "room.action",
+    seatId: "seat_2",
+    payload: {
+      type: "auction.bid",
+      amount: 4,
+    },
+  });
+  runtime.handleClientMessage(room.roomId, {
+    type: "room.action",
+    seatId: "seat_3",
+    payload: {
+      type: "auction.pass",
+    },
+  });
+  runtime.handleClientMessage(room.roomId, {
+    type: "room.action",
+    seatId: "seat_1",
+    sessionId: joined.session.sessionId,
+    payload: {
+      type: "auction.bid",
+      amount: 5,
+    },
+  });
+  runtime.handleClientMessage(room.roomId, {
+    type: "room.action",
+    seatId: "seat_2",
+    payload: {
+      type: "auction.pass",
+    },
+  });
+  runtime.handleClientMessage(room.roomId, {
+    type: "room.action",
+    seatId: "seat_3",
+    payload: {
+      type: "auction.bid",
+      amount: 2,
+    },
+  });
+  runtime.handleClientMessage(room.roomId, {
+    type: "room.action",
+    seatId: "seat_1",
+    sessionId: joined.session.sessionId,
+    payload: {
+      type: "auction.pass",
+    },
+  });
+  runtime.handleClientMessage(room.roomId, {
+    type: "room.action",
+    seatId: "seat_2",
+    payload: {
+      type: "auction.pass",
+    },
+  });
 
   const calls: Array<{ url: string; body: unknown }> = [];
   const escrowResponses = new Map<string, { escrowId: string }>();

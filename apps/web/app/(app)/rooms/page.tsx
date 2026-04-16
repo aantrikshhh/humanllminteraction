@@ -11,7 +11,7 @@ export default async function RoomsIndexPage() {
     <main className="app-shell">
       <div className="shell stack">
         <div className="topbar topbar-app">
-          <div className="brand">ARENA</div>
+          <div className="brand">Turing Games</div>
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
@@ -24,10 +24,10 @@ export default async function RoomsIndexPage() {
         <section className="hero-band">
           <div className="stack">
             <div className="eyebrow">Rooms</div>
-            <h1 className="section-title">Discover live and recently settled rooms.</h1>
+            <h1 className="section-title">Live rooms and recent closures.</h1>
             <p className="muted section-copy">
-              This route exposes the current room catalog from the runtime, with direct links into
-              both the live room shell and the seat-blinded result view.
+              Use this page as the room board for the MVP. It shows what is live right now, what
+              just closed, and where to jump next for results, ratings, or payouts.
             </p>
           </div>
           <div className="service-stack">
@@ -44,13 +44,13 @@ export default async function RoomsIndexPage() {
 
         <section className="workspace">
           <div className="stack">
-            <div className="section-row">
-              <div>
-                <h2>Active catalog</h2>
-                <p className="muted">
-                  Source: <code>{roomsSnapshot.baseUrl}</code>
-                </p>
-              </div>
+              <div className="section-row">
+                <div>
+                  <h2>Room board</h2>
+                  <p className="muted">
+                    Open live rooms to play or observe. Open result views when you want the settled outcome.
+                  </p>
+                </div>
               <div className="inline-actions">
                 <Link className="button" href="/results">
                   Result index
@@ -73,7 +73,7 @@ export default async function RoomsIndexPage() {
                   </div>
                   <h3>{room.roomId}</h3>
                   <p className="muted">
-                    Match <code>{room.matchId.slice(0, 12)}</code> · round {room.round}
+                    Match <code>{room.matchId.slice(0, 12)}</code> · round {room.round} · {room.phase}
                   </p>
                   <div className="metric-grid">
                     <div className="metric">
@@ -97,33 +97,33 @@ export default async function RoomsIndexPage() {
               ))}
             </div>
 
-            <div className="panel">
-              <div className="section-row">
-                <h2>Operator loop</h2>
-                <span className="pill subtle">Discoverability</span>
-              </div>
-              <div className="compact-list">
-                <div className="compact-row">
-                  <div>
-                    <strong>Start from the lobby</strong>
-                    <span>Create or seed a room before moving into the live stage.</span>
-                  </div>
-                  <Link href="/lobby">Open lobby</Link>
+              <div className="panel">
+                <div className="section-row">
+                  <h2>Keep the demo moving</h2>
+                  <span className="pill subtle">Next views</span>
                 </div>
-                <div className="compact-row">
-                  <div>
-                    <strong>Review settled outcomes</strong>
-                    <span>Use the result index for the read-only post-match surfaces.</span>
+                <div className="compact-list">
+                  <div className="compact-row">
+                    <div>
+                      <strong>Start from the lobby</strong>
+                      <span>Create a new room or use the featured demo path before returning here for live status.</span>
+                    </div>
+                    <Link href="/lobby">Open lobby</Link>
                   </div>
-                  <Link href="/results">Open results</Link>
-                </div>
-                <div className="compact-row">
-                  <div>
-                    <strong>Inspect downstream effects</strong>
-                    <span>Leaderboard and payments complete the operator loop after a match closes.</span>
+                  <div className="compact-row">
+                    <div>
+                      <strong>Review settled outcomes</strong>
+                      <span>Use the result index when you want the read-only post-match version of the room.</span>
+                    </div>
+                    <Link href="/results">Open results</Link>
                   </div>
-                  <Link href="/payments">Open payments</Link>
-                </div>
+                  <div className="compact-row">
+                    <div>
+                      <strong>Inspect downstream effects</strong>
+                      <span>Leaderboard and payments finish the MVP loop after a match closes.</span>
+                    </div>
+                    <Link href="/payments">Open payments</Link>
+                  </div>
               </div>
             </div>
           </div>

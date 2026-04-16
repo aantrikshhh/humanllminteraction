@@ -15,6 +15,7 @@
     "dev:web": "npm run dev -w @arena/web",
     "dev:api": "npm run dev -w @arena/api",
     "dev:rooms": "npm run dev -w @arena/rooms",
+    "start:web": "npm run start -w @arena/web",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"

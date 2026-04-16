@@ -329,6 +329,7 @@
 .sessionStack,
 .actionGrid,
 .controlGroup,
+.rulesGrid,
 .telemetryList,
 .inspectorBody {
   display: grid;
@@ -409,6 +410,47 @@
   gap: 8px;
 }
 
+.rulesPanel {
+  display: grid;
+  gap: 14px;
+}
+
+.rulesHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.rulesGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ruleCard {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(168, 203, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ruleCard span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.ruleCard strong {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.ruleCard p {
+  margin: 0;
+}
+
 .inspector {
   margin: 0;
   border: 1px solid rgba(168, 203, 255, 0.12);
@@ -482,6 +524,7 @@
 @media (max-width: 820px) {
   .focusGrid,
   .summaryBand,
+  .rulesGrid,
   .sidebarStack {
     grid-template-columns: 1fr;
   }

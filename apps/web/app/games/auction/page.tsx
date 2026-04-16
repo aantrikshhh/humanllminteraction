@@ -1,24 +1,23 @@
 import Link from "next/link";
 
-import { auctionBrief, auctionModule } from "@arena/game-auction";
+import { AUCTION_MIN_INCREMENT, auctionModule } from "@arena/game-auction";
 
 import { getRoomsSnapshot } from "../../../lib/service-data";
 import { GameSuiteMasthead } from "../GameSuiteMasthead";
 
 import {
-  AUCTION_MAX_BID,
+  AUCTION_PRIZE_LADDER,
+  AUCTION_ROUND_COUNT,
+  AUCTION_STARTING_BANKROLL,
   auctionSignals,
-  contentPlan,
   findLiveAuctionRoom,
   getAuctionStatus,
   getSeatAccent,
   hiddenInfoRail,
-  interactionThesis,
   operatorPath,
   premiseColumns,
   publicInfoRail,
   stageSeats,
-  visualThesis,
 } from "./data";
 import styles from "./auction.module.css";
 
@@ -48,10 +47,16 @@ export default async function AuctionPage() {
             </div>
 
             <p className={styles.lede}>
-              {auctionBrief.summary} Every seat pays for every escalation. Humans and LLM-backed
-              seats share the same public table, and nobody in the room gets to know which is
-              which. That makes Auction the cleanest live ARENA demo: one object, one leader, one
-              acting seat, and visible pressure from the first turn.
+              Auction is now a three-round bankroll match. Every seat starts with{" "}
+              <strong>{AUCTION_STARTING_BANKROLL} credits</strong>, the room auctions{" "}
+              <strong>
+                {AUCTION_PRIZE_LADDER.map((prize) => prize.value).join(" / ")} credit prizes
+              </strong>{" "}
+              in sequence, and your remaining bankroll carries forward between rounds. On your
+              turn, raise by at least <strong>{AUCTION_MIN_INCREMENT}</strong> or pass. Passing
+              drops you out of the <em>current round only</em>; you return for the next prize if
+              you still have credits left. After round {AUCTION_ROUND_COUNT}, the winner is the
+              seat with the highest final net worth: remaining bankroll plus prizes won.
             </p>
 
             <div className={styles.ctaRow}>
@@ -65,20 +70,20 @@ export default async function AuctionPage() {
 
             <div className={styles.heroMeta}>
               <div className={styles.metaCard}>
-                <span>Visual thesis</span>
-                <strong>{visualThesis}</strong>
+                <span>Starting bankroll</span>
+                <strong>{AUCTION_STARTING_BANKROLL} credits per seat</strong>
               </div>
               <div className={styles.metaCard}>
-                <span>Public rule</span>
-                <strong>No identity labels. Only bids, turns, scores, and passed seats.</strong>
+                <span>Prize ladder</span>
+                <strong>{AUCTION_PRIZE_LADDER.map((prize) => prize.value).join(" / ")} credits</strong>
               </div>
               <div className={styles.metaCard}>
-                <span>Content plan</span>
-                <strong>{contentPlan[0]}</strong>
+                <span>Raise rule</span>
+                <strong>Increase by at least {AUCTION_MIN_INCREMENT} or pass this round.</strong>
               </div>
               <div className={styles.metaCard}>
-                <span>Interaction thesis</span>
-                <strong>{interactionThesis[0]}</strong>
+                <span>How you win</span>
+                <strong>Highest final net worth after {AUCTION_ROUND_COUNT} rounds.</strong>
               </div>
             </div>
           </div>
@@ -121,12 +126,13 @@ export default async function AuctionPage() {
 
         <section className={styles.supportSection}>
           <div className={styles.sectionHead}>
-            <span className={styles.sectionKicker}>Why this game works</span>
-            <h2>The Auction makes hidden-seat multiplayer legible in under ten seconds.</h2>
+            <span className={styles.sectionKicker}>Rules at a glance</span>
+            <h2>The Auction is a three-round bankroll race, not a one-shot chaos button.</h2>
             <p className={styles.sectionCopy}>
-              There is no negotiation tree to teach and no complex board to decode. Spectators only
-              need four facts: what the item is worth, who is leading, who acts next, and how much
-              the table has burned chasing the prize.
+              The rules need to be legible in one pass. Spectators only need six facts: everyone
+              starts with the same bankroll, each round has its own prize value, bids are public,
+              pass only removes you from the current round, unspent credits carry forward, and the
+              match winner is whoever ends round {AUCTION_ROUND_COUNT} with the most net worth.
             </p>
           </div>
 
@@ -145,9 +151,10 @@ export default async function AuctionPage() {
             <span className={styles.sectionKicker}>Live room flow</span>
             <h2>One route briefs the game. The next route runs it.</h2>
             <p className={styles.sectionCopy}>
-              The operator path is intentionally short so the demo never stalls in setup. Auction
-              rooms open fast, Seat 1 gets a clear control rail, and the remaining seats stay
-              public-facing but identity-blind.
+              The operator path is intentionally short so the demo never stalls in setup. The room
+              page should answer the practical questions immediately: how many rounds remain, what
+              this prize is worth, who can still bid in the current round, and what bankroll
+              discipline is left for the rest of the match.
             </p>
           </div>
 
@@ -187,12 +194,13 @@ export default async function AuctionPage() {
         <section className={styles.finalSection}>
           <div className={styles.sectionHead}>
             <span className={styles.sectionKicker}>Flagship CTA</span>
-            <h2>Enter the table with the strongest current ARENA loop.</h2>
+            <h2>Enter the table with the strongest current Turing Games loop.</h2>
             <p className={styles.sectionCopy}>
-              Seats: {auctionBrief.playerCountLabel}. Turn window:{" "}
-              {Math.floor(auctionModule.timers.actionMs / 1000)} seconds. Cap: {AUCTION_MAX_BID}.
-              If a live room is already running, jump straight to it. Otherwise the lobby can spawn
-              one immediately.
+              Seats: 3-5. Starting bankroll: {AUCTION_STARTING_BANKROLL}. Prize ladder:{" "}
+              {AUCTION_PRIZE_LADDER.map((prize) => `${prize.value} (${prize.itemName})`).join(", ")}.
+              Turn window: {Math.floor(auctionModule.timers.actionMs / 1000)} seconds. Most rooms
+              resolve in three rounds with short public bidding wars. If a live room is already
+              running, jump straight to it. Otherwise the lobby can spawn one immediately.
             </p>
           </div>
 

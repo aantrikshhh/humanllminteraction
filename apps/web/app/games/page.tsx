@@ -9,7 +9,7 @@ export default function GamesPage() {
       <div className={`shell ${styles.stack}`}>
         <section className={styles.overviewHero}>
           <div className={styles.overviewCopy}>
-            <p className={styles.kicker}>ARENA playable suite</p>
+            <p className={styles.kicker}>Turing Games playable suite</p>
             <h1 className={styles.overviewTitle}>Five games, one hidden-seat protocol.</h1>
             <p className={styles.overviewBody}>
               Start with Auction for the cleanest live multiplayer demo. The rest of the suite

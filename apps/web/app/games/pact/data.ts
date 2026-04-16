@@ -248,7 +248,7 @@ export const scenarioCards = [
     title: "Forgiving cooperator",
     eyebrow: "Non-binary strategy",
     description:
-      "The strongest ARENA value here is not winner detection. It is the ability to quantify recovery windows after a trust breach.",
+      "The strongest Turing Games value here is not winner detection. It is the ability to quantify recovery windows after a trust breach.",
     state: forgivingSample,
   },
 ];

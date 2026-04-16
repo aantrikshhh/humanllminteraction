@@ -7,6 +7,7 @@ import type {
   AuctionGameModule,
   AuctionPrivateState,
   AuctionPublicRoomState,
+  AuctionSeatPublicView,
   AuctionPublicState,
 } from "./types";
 
@@ -15,6 +16,9 @@ import {
   AUCTION_ITEM_VALUE,
   AUCTION_MAX_BID,
   AUCTION_MIN_INCREMENT,
+  AUCTION_PRIZE_VALUES,
+  AUCTION_STARTING_BANKROLL,
+  AUCTION_TOTAL_ROUNDS,
   createAuctionConfig,
 } from "./types";
 
@@ -30,7 +34,7 @@ export const auctionBrief: AuctionBrief = {
   id: "auction",
   title: "The Auction",
   summary:
-    "A live all-pay auction optimized for high-spectacle multiplayer demos and hidden human-vs-LLM play.",
+    "A multi-round bankroll auction where every visible bid burns credits and prize value carries across a full match.",
   playerCountLabel: "3-5 seats",
   visualDirection: "pixel arena exchange floor",
   priority: "p0",
@@ -64,6 +68,9 @@ export {
   AUCTION_ITEM_VALUE,
   AUCTION_MAX_BID,
   AUCTION_MIN_INCREMENT,
+  AUCTION_PRIZE_VALUES,
+  AUCTION_STARTING_BANKROLL,
+  AUCTION_TOTAL_ROUNDS,
   applyAuctionAction,
   createAuctionConfig,
   createAuctionState,
@@ -79,5 +86,6 @@ export type {
   AuctionGameModule,
   AuctionPrivateState,
   AuctionPublicRoomState,
+  AuctionSeatPublicView,
   AuctionPublicState,
 };

@@ -205,6 +205,9 @@ test("stores match result and exposes replay envelope", () => {
 
   assert.equal(publicRoom?.phase, "results");
   assert.equal(publicRoom?.publicResult?.completedAt, result.completedAt);
+  assert.equal(publicRoom?.seats[0]?.score, 650);
+  assert.equal(publicRoom?.seats[1]?.score, -300);
+  assert.equal(publicRoom?.seats[2]?.score, -150);
   assert.equal(publicRoom?.replaySummary?.available, true);
   assert.equal(publicRoom?.matchSync?.status, "pending");
   assert.equal(replay.events.at(-1)?.type, "match.result");
@@ -386,6 +389,56 @@ test("allows each session to claim exactly one human seat", () => {
     () => runtime.claimSeat(room.roomId, sessionTwo.sessionId, "seat_1"),
     /already claimed/i,
   );
+});
+
+test("keeps projected public seat readiness and connectivity synced after claim and ready updates", () => {
+  const runtime = new InMemoryRoomRuntime(() => "2026-04-16T12:00:00.000Z");
+  const room = runtime.createRoom({
+    game: "auction",
+    seats: [
+      {
+        displayName: "Seat One",
+        avatarId: "fox",
+        backingType: "human",
+      },
+      {
+        displayName: "Seat Two",
+        avatarId: "owl",
+        backingType: "human",
+      },
+      {
+        displayName: "Seat Three",
+        avatarId: "lynx",
+        backingType: "llm",
+      },
+    ],
+  });
+
+  const session = runtime.createOrRefreshSession(room.roomId, {
+    displayName: "Guest",
+  }).session;
+
+  const claimed = runtime.claimSeat(room.roomId, session.sessionId, "seat_1") as import("@arena/contracts").RoomSessionEnvelope<
+    import("@arena/game-auction").AuctionPublicState
+  >;
+
+  assert.equal(claimed.room.phase, "lobby");
+  assert.equal(claimed.room.seats[0]?.isConnected, true);
+  assert.equal(claimed.room.seats[0]?.isReady, false);
+  assert.equal(claimed.room.publicState.seats[0]?.isConnected, true);
+  assert.equal(claimed.room.publicState.seats[0]?.isReady, false);
+  assert.equal(claimed.room.publicState.seats[1]?.isConnected, false);
+  assert.equal(claimed.room.publicState.seats[1]?.isReady, false);
+
+  const ready = runtime.handleClientMessage(room.roomId, {
+    type: "room.ready",
+    seatId: "seat_1",
+    sessionId: session.sessionId,
+    payload: true,
+  }) as import("@arena/contracts").PublicRoomState<import("@arena/game-auction").AuctionPublicState>;
+
+  assert.equal(ready.seats[0]?.isReady, true);
+  assert.equal(ready.publicState.seats[0]?.isReady, true);
 });
 
 test("requires the controlling session for ready action and leave on claimed human seats", () => {

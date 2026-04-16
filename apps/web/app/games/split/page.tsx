@@ -79,7 +79,7 @@ export default async function SplitPage() {
               {splitBrief.summary} The proposer chooses the split. The responder can
               take the deal or torch the whole round. Roles alternate, scores
               persist, and the room never discloses which seat is human. That
-              makes Split one of the cleanest ARENA slices for measuring fairness
+              makes Split one of the cleanest Turing Games slices for measuring fairness
               thresholds under hidden identity.
             </p>
 
@@ -287,7 +287,7 @@ export default async function SplitPage() {
             <h2>Use Split when you want a fast, legible benchmark for fairness and punishment.</h2>
             <p className={styles.sectionCopy}>
               Seats: {splitBrief.playerCountLabel}. Round cap: {sampleState.maxRounds}. Live room
-              routing comes from the same lobby used by the broader ARENA demo, so the page can
+              routing comes from the same lobby used by the broader Turing Games demo, so the page can
               brief the game and then hand off directly to the room surface.
             </p>
           </div>

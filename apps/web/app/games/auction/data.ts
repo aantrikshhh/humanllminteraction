@@ -1,20 +1,24 @@
 import type { PublicRoomState } from "@arena/contracts";
 import {
-  AUCTION_ITEM_NAME,
-  AUCTION_ITEM_VALUE,
-  AUCTION_MAX_BID,
   AUCTION_MIN_INCREMENT,
-  auctionBrief,
   auctionModule,
 } from "@arena/game-auction";
+
+export const AUCTION_STARTING_BANKROLL = 20;
+export const AUCTION_PRIZE_LADDER = [
+  { round: 1, itemName: "Signal Relay", value: 12 },
+  { round: 2, itemName: "Blackmail Ledger", value: 9 },
+  { round: 3, itemName: "Embassy Cipher", value: 7 },
+] as const;
+export const AUCTION_ROUND_COUNT = AUCTION_PRIZE_LADDER.length;
 
 export const visualThesis =
   "A masked exchange floor: theatrical, high-contrast, and tense enough to sell hidden human-vs-LLM multiplayer in a single screen.";
 
 export const contentPlan = [
-  "Hero: flagship multiplayer premise, live-room CTA, and blinded-seat board.",
-  "Support: why Auction works as the ARENA demo and what information is intentionally public.",
-  "Detail: operator path, room lifecycle, and what a player is actually deciding in real time.",
+  "Hero: multi-round bankroll rules, live-room CTA, and blinded-seat board.",
+  "Support: how the prize ladder works and why pass only ends your current round.",
+  "Detail: what the table can see, what stays hidden, and how final net worth is scored.",
   "Final CTA: enter a live room or create one from the lobby.",
 ] as const;
 
@@ -27,23 +31,23 @@ export const interactionThesis = [
 export const auctionSignals = [
   {
     label: "Seat count",
-    value: auctionBrief.playerCountLabel,
-    detail: "Enough seats for live bluffing, small enough for spectators to read the room.",
+    value: "3-5 seats",
+    detail: "Enough bodies for social pressure, still small enough for spectators to follow every decision.",
   },
   {
-    label: "Opening item",
-    value: `${AUCTION_ITEM_NAME} · value ${AUCTION_ITEM_VALUE}`,
-    detail: "The room is racing over a shared prize, so every action is easy to follow on stream.",
+    label: "Bankroll",
+    value: `${AUCTION_STARTING_BANKROLL} credits each`,
+    detail: "Every seat starts with the same public budget and carries the remainder into the next round.",
   },
   {
-    label: "Bid cadence",
-    value: `+${AUCTION_MIN_INCREMENT} minimum`,
-    detail: "Turns stay fast, readable, and brutal because every increase is public and irreversible.",
+    label: "Prize ladder",
+    value: AUCTION_PRIZE_LADDER.map((prize) => prize.value).join(" / "),
+    detail: "Three auctions run back to back, so overspending early makes later prizes harder to contest.",
   },
   {
     label: "Action clock",
     value: `${Math.floor(auctionModule.timers.actionMs / 1000)} second turns`,
-    detail: "Tension comes from short windows, not hidden menus or deep rules overhead.",
+    detail: "Each acting seat must raise by at least the minimum or pass out of the current round.",
   },
 ] as const;
 
@@ -54,14 +58,14 @@ export const premiseColumns = [
       "Each seat is just a seat. The room never labels who is human, who is LLM-backed, or who is scripted. Players read timing, aggression, and restraint from public bids only.",
   },
   {
-    title: "All-pay stakes",
+    title: "Three rounds, one bankroll",
     body:
-      "This is not a clean winner-takes-all auction. Every bid burns capital whether you win or not, which creates visible risk and stronger behavioral data every round.",
+      "The match is not one vague brawl over one item. Every seat starts with 20 credits, the room auctions three prizes in sequence, and whatever you do not spend carries into the next round.",
   },
   {
     title: "Built for spectators",
     body:
-      "One item, one live leader, one acting seat, and a visible pot. The state is legible enough for demos, streams, and benchmarking sessions without hidden UI complexity.",
+      "Each round has one prize, one live leader, one acting seat, and one visible spend total. The table is easy to read, while the hidden identities still create uncertainty.",
   },
 ] as const;
 
@@ -72,25 +76,25 @@ export const operatorPath = [
   },
   {
     step: "Open the live table",
-    detail: "The room page becomes the command surface: current bid, current leader, turn owner, and blinded seat board.",
+    detail: "The room page becomes the command surface: current round, prize value, current leader, acting seat, and blinded seat board.",
   },
   {
     step: "Play the room out",
-    detail: "Pass or increase the bid. The runtime advances hidden LLM seats automatically until the match resolves and propagates into results, leaderboard, and payout flows.",
+    detail: "In each round, raise by at least the minimum or pass out of that round only. After round three, the runtime settles final net worth and propagates the result into results, leaderboard, and payout flows.",
   },
 ] as const;
 
 export const publicInfoRail = [
-  "Current item name and reference value",
-  "Current bid, total pot, and leading seat",
-  "Which seat acts now and which seats have passed",
+  "Current round, current prize, and prize value",
+  "Current bid, round spend, and leading seat",
+  "Which seat acts now and which seats have passed this round",
   "Seat readiness, connection state, and public score",
 ] as const;
 
 export const hiddenInfoRail = [
   "Whether any seat is human or LLM-backed",
   "Prompt versions, model ids, or internal decision traces",
-  "Private bankroll intent beyond the committed public bid",
+  "Private intent behind bankroll preservation or aggression",
   "Any backstage orchestration metadata used for benchmarking",
 ] as const;
 
@@ -109,7 +113,7 @@ export function getAuctionStatus(room: PublicRoomState | null) {
   if (!room) {
     return {
       label: "No live auction room detected",
-      detail: "The page can still brief the game, but the operator lobby must create a room before the live flow is available.",
+      detail: "The rules are still readable here, but the lobby must create a room before the live multi-round table is available.",
       ctaHref: "/lobby",
       ctaLabel: "Create a live auction room",
     };
@@ -130,5 +134,3 @@ export function getSeatAccent(avatarId: string) {
   if (avatarId.includes("verdant")) return "#8ef0a8";
   return "#d8e2f6";
 }
-
-export { AUCTION_MAX_BID };

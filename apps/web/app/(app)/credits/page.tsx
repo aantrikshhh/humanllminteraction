@@ -22,7 +22,7 @@ export default function CreditsPage() {
             <div className={styles.eyebrow}>Credits</div>
             <h1 className={styles.title}>Asset governance, not a forgotten footer.</h1>
             <p className={styles.intro}>
-              ARENA keeps source policy and per-asset credits explicit. We credit every approved
+              Turing Games keeps source policy and per-asset credits explicit. We credit every approved
               pack we use even when a license does not require it, and OpenGameArt stays
               per-asset only after license review.
             </p>

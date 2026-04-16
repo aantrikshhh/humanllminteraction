@@ -64,27 +64,37 @@ const biddingResult = runScenario(
     { seatId: "a", submittedAt: "2026-01-01T00:00:00.000Z", action: { type: "auction.bid", amount: 3 } },
     { seatId: "b", submittedAt: "2026-01-01T00:00:01.000Z", action: { type: "auction.pass" } },
     { seatId: "c", submittedAt: "2026-01-01T00:00:02.000Z", action: { type: "auction.bid", amount: 5 } },
-    { seatId: "a", submittedAt: "2026-01-01T00:00:03.000Z", action: { type: "auction.bid", amount: 6 } },
-    { seatId: "c", submittedAt: "2026-01-01T00:00:04.000Z", action: { type: "auction.pass" } },
+    { seatId: "a", submittedAt: "2026-01-01T00:00:03.000Z", action: { type: "auction.pass" } },
+    { seatId: "b", submittedAt: "2026-01-01T00:00:04.000Z", action: { type: "auction.bid", amount: 4 } },
+    { seatId: "c", submittedAt: "2026-01-01T00:00:05.000Z", action: { type: "auction.pass" } },
+    { seatId: "a", submittedAt: "2026-01-01T00:00:06.000Z", action: { type: "auction.bid", amount: 5 } },
+    { seatId: "b", submittedAt: "2026-01-01T00:00:07.000Z", action: { type: "auction.pass" } },
+    { seatId: "c", submittedAt: "2026-01-01T00:00:08.000Z", action: { type: "auction.bid", amount: 2 } },
+    { seatId: "a", submittedAt: "2026-01-01T00:00:09.000Z", action: { type: "auction.pass" } },
+    { seatId: "b", submittedAt: "2026-01-01T00:00:10.000Z", action: { type: "auction.pass" } },
   ],
 );
 
-assert.deepEqual(biddingResult.winningSeatIds, ["a"]);
-assert.equal(biddingResult.seatScores.a, 24);
-assert.equal(biddingResult.seatScores.b, 0);
-assert.equal(biddingResult.seatScores.c, -5);
+assert.deepEqual(biddingResult.winningSeatIds, ["c"]);
+assert.equal(biddingResult.seatScores.a, 1);
+assert.equal(biddingResult.seatScores.b, -4);
+assert.equal(biddingResult.seatScores.c, 12);
 
 const passResult = runScenario(
   ["x", "y", "z"],
   [
     { seatId: "x", submittedAt: "2026-01-01T01:00:00.000Z", action: { type: "auction.pass" } },
     { seatId: "y", submittedAt: "2026-01-01T01:00:01.000Z", action: { type: "auction.pass" } },
+    { seatId: "y", submittedAt: "2026-01-01T01:00:02.000Z", action: { type: "auction.pass" } },
+    { seatId: "z", submittedAt: "2026-01-01T01:00:03.000Z", action: { type: "auction.pass" } },
+    { seatId: "z", submittedAt: "2026-01-01T01:00:04.000Z", action: { type: "auction.pass" } },
+    { seatId: "x", submittedAt: "2026-01-01T01:00:05.000Z", action: { type: "auction.pass" } },
   ],
 );
 
 assert.deepEqual(passResult.winningSeatIds, ["z"]);
-assert.equal(passResult.seatScores.x, 0);
-assert.equal(passResult.seatScores.y, 0);
-assert.equal(passResult.seatScores.z, 30);
+assert.equal(passResult.seatScores.x, 9);
+assert.equal(passResult.seatScores.y, 7);
+assert.equal(passResult.seatScores.z, 12);
 
 console.log("auction smoke test passed");

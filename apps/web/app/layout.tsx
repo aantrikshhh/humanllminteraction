@@ -15,7 +15,7 @@ const body = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "ARENA",
+  title: "Turing Games",
   description:
     "Multiplayer social-strategy rooms where some opponents may be hidden LLM seats and you do not know which is which.",
 };
