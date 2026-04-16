@@ -33,6 +33,12 @@ export interface PlayerSession {
   status: "active" | "expired";
 }
 
+export interface PublicRoomJoinState {
+  canJoin: boolean;
+  openSeatIds: SeatId[];
+  claimedSeatIds: SeatId[];
+}
+
 export interface PublicSeatView {
   seatId: SeatId;
   displayName: string;
@@ -45,6 +51,7 @@ export interface PublicSeatView {
 export interface PrivateSeatMetadata {
   seatId: SeatId;
   playerId?: PlayerId;
+  sessionId?: SessionId;
   backingType: SeatBackingType;
   llmModelId?: string;
   promptVersionId?: string;
@@ -89,6 +96,7 @@ export interface PublicRoomState<TPublicState = unknown> {
   publicResult?: PublicMatchResultSummary;
   replaySummary?: PublicReplaySummary;
   matchSync?: PublicMatchSyncState;
+  joinState?: PublicRoomJoinState;
 }
 
 export interface ClientMessage<TPayload = unknown> {
@@ -101,7 +109,13 @@ export interface ClientMessage<TPayload = unknown> {
     | "room.heartbeat";
   matchId?: MatchId;
   seatId?: SeatId;
+  sessionId?: SessionId;
   payload?: TPayload;
+}
+
+export interface RoomSessionEnvelope<TPublicState = unknown> {
+  room: PublicRoomState<TPublicState>;
+  session: PlayerSession;
 }
 
 export interface ServerEvent<TPayload = unknown> {

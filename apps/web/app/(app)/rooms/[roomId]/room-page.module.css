@@ -124,6 +124,13 @@
   margin-bottom: 18px;
 }
 
+.summaryBand {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
 .auctionMetric {
   border-radius: 18px;
   padding: 16px;
@@ -142,6 +149,27 @@
 
 .auctionMetric strong {
   font-size: 1.35rem;
+}
+
+.summaryMetric {
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid rgba(168, 203, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 8px;
+}
+
+.summaryMetric span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.summaryMetric strong {
+  font-size: 1.15rem;
+  line-height: 1.1;
 }
 
 .genericBand {
@@ -164,7 +192,7 @@
 .seatCard {
   --seat-accent: #d3def8;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 16px;
   align-items: center;
   padding: 16px;
@@ -232,6 +260,10 @@
   text-align: right;
 }
 
+.claimButton {
+  min-width: 132px;
+}
+
 .seatStats span {
   color: var(--muted);
   font-size: 0.84rem;
@@ -276,12 +308,134 @@
   font-size: 1.1rem;
 }
 
+.joinForm {
+  display: grid;
+  gap: 12px;
+}
+
+.joinField {
+  display: grid;
+  gap: 8px;
+}
+
+.joinField span,
+.sessionPanel span,
+.ownedSeatHeading span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.joinInput {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(168, 203, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  padding: 14px 16px;
+  font: inherit;
+}
+
+.joinInput:focus {
+  outline: 2px solid rgba(106, 215, 255, 0.35);
+  outline-offset: 2px;
+}
+
+.sessionStack {
+  display: grid;
+  gap: 12px;
+}
+
+.sessionPanel,
+.ownedSeatPanel {
+  border-radius: 18px;
+  border: 1px solid rgba(168, 203, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 14px;
+}
+
+.sessionPanel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sessionPanel strong,
+.ownedSeatHeading strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.02rem;
+}
+
+.ownedSeatHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.ownedSeatPanel p {
+  margin: 10px 0 0;
+}
+
+.readyRail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.claimPanel p {
+  margin: 8px 0 0;
+}
+
 .turnPanel p {
   margin: 8px 0 0;
 }
 
 .actionGrid {
   display: grid;
+  gap: 10px;
+}
+
+.actionSection {
+  display: grid;
+  gap: 12px;
+}
+
+.inputField {
+  display: grid;
+  gap: 8px;
+}
+
+.inputField span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.numberInput {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(168, 203, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  padding: 14px 16px;
+  font: inherit;
+}
+
+.numberInput:focus {
+  outline: 2px solid rgba(106, 215, 255, 0.35);
+  outline-offset: 2px;
+}
+
+.choiceGrid,
+.targetGrid,
+.segmentedControl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -356,13 +510,27 @@
   }
 
   .auctionBand,
+  .summaryBand,
   .operatorSummary,
-  .sidebarStack {
+  .sidebarStack,
+  .sessionPanel,
+  .readyRail,
+  .choiceGrid,
+  .targetGrid,
+  .segmentedControl {
     grid-template-columns: 1fr;
   }
 
   .seatStats {
     justify-items: start;
     text-align: left;
+  }
+
+  .claimButton {
+    width: 100%;
+  }
+
+  .ownedSeatHeading {
+    display: grid;
   }
 }

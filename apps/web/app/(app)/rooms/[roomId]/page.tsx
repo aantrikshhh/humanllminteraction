@@ -39,8 +39,8 @@ export default async function RoomPage({ params }: RoomPageProps) {
               {roomSnapshot.data ? `${labelGame(roomSnapshot.data.game)} room` : "Room offline"}
             </h1>
             <p className="muted section-copy">
-              Auction is the first fully playable experience here. Seats stay blinded, the operator
-              controls only Seat 1, and the page keeps polling the runtime for fresh state.
+              Join from this page, claim an open mask, ready up, and act when your turn goes live.
+              Occupied seats stay identity-blinded throughout the room.
             </p>
           </div>
           <div className="service-stack">
@@ -66,8 +66,8 @@ export default async function RoomPage({ params }: RoomPageProps) {
                 <div>
                   <h2>Room loop</h2>
                   <p className="muted">
-                    Stay on the live stage, then move directly into the public result, rankings, or
-                    payout surface once the room settles.
+                    Stay inside the live stage, then move directly into the public result, rankings,
+                    or payout surface once the room settles.
                   </p>
                 </div>
                 <div className="inline-actions">
@@ -113,7 +113,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
               <div className={`panel ${styles.emptyState}`}>
                 <strong>No room snapshot was returned for this id.</strong>
                 <p className="muted">
-                  Create a demo room from the lobby, then reopen this route with the live room id.
+                  Create a live room from the lobby, then reopen this route with the new room id.
                 </p>
               </div>
             </div>

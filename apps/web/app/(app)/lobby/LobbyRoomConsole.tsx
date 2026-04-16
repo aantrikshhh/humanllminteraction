@@ -1,15 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-import type { PublicRoomState } from "@arena/contracts";
-import {
-  AUCTION_MAX_BID,
-  AUCTION_MIN_INCREMENT,
-  type AuctionAction,
-  type AuctionPublicState,
-} from "@arena/game-auction";
+import type { GameKey, PublicRoomState, SeatBackingType } from "@arena/contracts";
+import { type AuctionPublicState } from "@arena/game-auction";
 
 import { labelGame } from "../../../lib/service-data";
 
@@ -17,49 +13,180 @@ interface LobbyRoomConsoleProps {
   initialRooms: PublicRoomState[];
 }
 
-const operatorSeatId = "seat_1";
+interface CreateRoomTemplate {
+  game: GameKey;
+  title: string;
+  strap: string;
+  detail: string;
+  players: string;
+  payload: {
+    game: GameKey;
+    seats: Array<{
+      displayName: string;
+      avatarId: string;
+      backingType: SeatBackingType;
+      llmModelId?: string;
+      promptVersionId?: string;
+    }>;
+  };
+}
 
-const demoAuctionRoomPayload = {
-  game: "auction",
-  phase: "active",
-  seats: [
-    {
-      displayName: "Seat 1",
-      avatarId: "mask-amber",
-      backingType: "human",
-      playerId: "demo-player",
+const roomTemplates: CreateRoomTemplate[] = [
+  {
+    game: "auction",
+    title: "Auction",
+    strap: "Fast bluffing pressure",
+    detail: "One human bidder enters a four-seat auction against three hidden rivals.",
+    players: "1 human + 3 hidden agents",
+    payload: {
+      game: "auction",
+      seats: [
+        { displayName: "Mask 1", avatarId: "mask-amber", backingType: "human" },
+        {
+          displayName: "Mask 2",
+          avatarId: "mask-cyan",
+          backingType: "llm",
+          llmModelId: "auction-shadow-1",
+          promptVersionId: "auction-hidden-v1",
+        },
+        {
+          displayName: "Mask 3",
+          avatarId: "mask-rose",
+          backingType: "llm",
+          llmModelId: "auction-shadow-2",
+          promptVersionId: "auction-hidden-v1",
+        },
+        {
+          displayName: "Mask 4",
+          avatarId: "mask-verdant",
+          backingType: "scripted",
+        },
+      ],
     },
-    {
-      displayName: "Seat 2",
-      avatarId: "mask-cyan",
-      backingType: "llm",
-      llmModelId: "demo-auction-fake-1",
-      promptVersionId: "auction-fake-v1",
+  },
+  {
+    game: "split",
+    title: "Split",
+    strap: "One offer, one answer",
+    detail: "Claim a single mask and negotiate against one hidden counterpart.",
+    players: "1 human + 1 hidden agent",
+    payload: {
+      game: "split",
+      seats: [
+        { displayName: "Mask 1", avatarId: "mask-amber", backingType: "human" },
+        {
+          displayName: "Mask 2",
+          avatarId: "mask-cyan",
+          backingType: "llm",
+          llmModelId: "split-shadow-1",
+          promptVersionId: "split-hidden-v1",
+        },
+      ],
     },
-    {
-      displayName: "Seat 3",
-      avatarId: "mask-rose",
-      backingType: "llm",
-      llmModelId: "demo-auction-fake-2",
-      promptVersionId: "auction-fake-v1",
+  },
+  {
+    game: "pact",
+    title: "Pact",
+    strap: "Repeated trust loop",
+    detail: "Fifteen hidden commitment rounds against one unknown rival.",
+    players: "1 human + 1 hidden agent",
+    payload: {
+      game: "pact",
+      seats: [
+        { displayName: "Mask 1", avatarId: "mask-amber", backingType: "human" },
+        {
+          displayName: "Mask 2",
+          avatarId: "mask-cyan",
+          backingType: "llm",
+          llmModelId: "pact-shadow-1",
+          promptVersionId: "pact-hidden-v1",
+        },
+      ],
     },
-    {
-      displayName: "Seat 4",
-      avatarId: "mask-verdant",
-      backingType: "llm",
-      llmModelId: "demo-auction-fake-3",
-      promptVersionId: "auction-fake-v1",
+  },
+  {
+    game: "vault",
+    title: "Vault",
+    strap: "Public goods with accusations",
+    detail: "Contribute, then accuse. Three hidden seats pressure every round.",
+    players: "1 human + 3 hidden agents",
+    payload: {
+      game: "vault",
+      seats: [
+        { displayName: "Mask 1", avatarId: "mask-amber", backingType: "human" },
+        {
+          displayName: "Mask 2",
+          avatarId: "mask-cyan",
+          backingType: "llm",
+          llmModelId: "vault-shadow-1",
+          promptVersionId: "vault-hidden-v1",
+        },
+        {
+          displayName: "Mask 3",
+          avatarId: "mask-rose",
+          backingType: "scripted",
+        },
+        {
+          displayName: "Mask 4",
+          avatarId: "mask-verdant",
+          backingType: "llm",
+          llmModelId: "vault-shadow-2",
+          promptVersionId: "vault-hidden-v1",
+        },
+      ],
     },
-  ],
-} as const;
+  },
+  {
+    game: "settlement",
+    title: "Settlement",
+    strap: "Turn-based coalition strain",
+    detail: "Rotate through pledges and hidden commitments across a live frontier room.",
+    players: "1 human + 3 hidden agents",
+    payload: {
+      game: "settlement",
+      seats: [
+        { displayName: "Mask 1", avatarId: "mask-amber", backingType: "human" },
+        {
+          displayName: "Mask 2",
+          avatarId: "mask-cyan",
+          backingType: "llm",
+          llmModelId: "settlement-shadow-1",
+          promptVersionId: "settlement-hidden-v1",
+        },
+        {
+          displayName: "Mask 3",
+          avatarId: "mask-rose",
+          backingType: "scripted",
+        },
+        {
+          displayName: "Mask 4",
+          avatarId: "mask-verdant",
+          backingType: "llm",
+          llmModelId: "settlement-shadow-2",
+          promptVersionId: "settlement-hidden-v1",
+        },
+      ],
+    },
+  },
+];
 
 function isAuctionRoom(room: PublicRoomState): room is PublicRoomState<AuctionPublicState> {
   return room.game === "auction";
 }
 
+function getOpenMaskCount(room: PublicRoomState): number {
+  return room.joinState?.openSeatIds.length ?? room.seats.filter((seat) => !seat.isConnected && !seat.isReady).length;
+}
+
+function getClaimedMaskCount(room: PublicRoomState): number {
+  return room.joinState?.claimedSeatIds.length ?? room.seats.filter((seat) => seat.isConnected && !seat.isReady).length;
+}
+
 export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps) {
+  const router = useRouter();
   const [rooms, setRooms] = useState(initialRooms);
   const [error, setError] = useState<string | null>(null);
+  const [creatingGame, setCreatingGame] = useState<GameKey | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const refreshRooms = async (silent = false) => {
@@ -97,14 +224,16 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
     };
   }, []);
 
-  const createDemoAuctionRoom = async () => {
+  const createRoom = async (template: CreateRoomTemplate) => {
+    setCreatingGame(template.game);
+
     try {
       const response = await fetch("/api/rooms", {
         method: "POST",
         headers: {
           "content-type": "application/json; charset=utf-8",
         },
-        body: JSON.stringify(demoAuctionRoomPayload),
+        body: JSON.stringify(template.payload),
       });
 
       if (!response.ok) {
@@ -116,38 +245,12 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
         setRooms((current) => [room, ...current.filter((candidate) => candidate.roomId !== room.roomId)]);
         setError(null);
       });
+
+      router.push(`/rooms/${room.roomId}`);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "could not create demo room");
-    }
-  };
-
-  const sendAuctionAction = async (roomId: string, action: AuctionAction) => {
-    try {
-      const response = await fetch(`/api/rooms/${roomId}/messages`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json; charset=utf-8",
-        },
-        body: JSON.stringify({
-          type: "room.action",
-          seatId: operatorSeatId,
-          payload: action,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`action failed with status ${response.status}`);
-      }
-
-      const room = (await response.json()) as PublicRoomState;
-      startTransition(() => {
-        setRooms((current) =>
-          current.map((candidate) => (candidate.roomId === room.roomId ? room : candidate)),
-        );
-        setError(null);
-      });
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "could not submit action");
+      setError(cause instanceof Error ? cause.message : "could not create room");
+    } finally {
+      setCreatingGame(null);
     }
   };
 
@@ -155,18 +258,18 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
     <div className="stack">
       <div className="section-row">
         <div>
-          <h2>Active Rooms</h2>
-          <p className="muted">Create a live Auction room here, then play as Seat 1.</p>
+          <h2>Launch a live room</h2>
+          <p className="muted">
+            Every fresh room starts joinable. Enter with one browser, claim the lone human mask, and play against
+            hidden agent seats.
+          </p>
         </div>
         <div className="inline-actions">
-          <button className="button primary" onClick={() => void createDemoAuctionRoom()} type="button">
-            Create demo auction room
-          </button>
           <button className="button" onClick={() => void refreshRooms()} type="button">
             {isPending ? "Refreshing..." : "Refresh"}
           </button>
-          <Link className="button" href="/games/auction">
-            Open flagship game
+          <Link className="button" href="/rooms">
+            Room index
           </Link>
         </div>
       </div>
@@ -174,12 +277,59 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
       {error ? <div className="panel error-panel">{error}</div> : null}
 
       <div className="card-grid">
+        {roomTemplates.map((template) => (
+          <article className="panel tile-card" key={template.game}>
+            <div className="tile-topline">
+              <span className="pill accent">{template.title}</span>
+              <span className="pill subtle">{template.players}</span>
+            </div>
+            <h3>{template.strap}</h3>
+            <p className="muted">{template.detail}</p>
+            <div className="metric-grid">
+              <div className="metric">
+                <span>Human masks</span>
+                <strong>1</strong>
+              </div>
+              <div className="metric">
+                <span>Hidden seats</span>
+                <strong>{template.payload.seats.length - 1}</strong>
+              </div>
+              <div className="metric">
+                <span>Game</span>
+                <strong>{labelGame(template.game)}</strong>
+              </div>
+            </div>
+            <div className="inline-actions">
+              <button
+                className="button primary"
+                disabled={creatingGame === template.game}
+                onClick={() => void createRoom(template)}
+                type="button"
+              >
+                {creatingGame === template.game ? "Opening..." : `Create ${template.title}`}
+              </button>
+              <Link className="button" href={`/games/${template.game}`}>
+                Brief
+              </Link>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="section-row">
+        <div>
+          <h2>Active rooms</h2>
+          <p className="muted">Open any live room, claim one visible mask, then let the rest stay identity-blinded.</p>
+        </div>
+      </div>
+
+      <div className="card-grid">
         {rooms.map((room) => {
           const readySeats = room.seats.filter((seat) => seat.isReady).length;
           const connectedSeats = room.seats.filter((seat) => seat.isConnected).length;
+          const openSeats = getOpenMaskCount(room);
+          const claimedSeats = getClaimedMaskCount(room);
           const auctionState = isAuctionRoom(room) ? room.publicState : null;
-          const canOperatorAct =
-            auctionState?.phase === "bidding" && auctionState.currentTurnSeatId === operatorSeatId;
 
           return (
             <article className="panel tile-card" key={room.roomId}>
@@ -203,18 +353,20 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
                     <strong>{auctionState.currentPot}</strong>
                   </div>
                   <div className="metric">
-                    <span>Leader</span>
-                    <strong>{auctionState.currentLeaderSeatId ?? "none"}</strong>
+                    <span>Turns left</span>
+                    <strong>{auctionState.turnsRemaining}</strong>
                   </div>
                 </div>
               ) : null}
 
               <div className="metric-grid">
                 <div className="metric">
-                  <span>Connected</span>
-                  <strong>
-                    {connectedSeats}/{room.seats.length}
-                  </strong>
+                  <span>Open masks</span>
+                  <strong>{openSeats}</strong>
+                </div>
+                <div className="metric">
+                  <span>Claimed</span>
+                  <strong>{claimedSeats}</strong>
                 </div>
                 <div className="metric">
                   <span>Ready</span>
@@ -222,99 +374,42 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
                     {readySeats}/{room.seats.length}
                   </strong>
                 </div>
+                <div className="metric">
+                  <span>Connected</span>
+                  <strong>
+                    {connectedSeats}/{room.seats.length}
+                  </strong>
+                </div>
               </div>
 
               <div className="seat-column">
-                {room.seats.map((seat) => (
-                  <div className="seat-line" key={seat.seatId}>
-                    <div>
-                      <strong>{seat.displayName}</strong>
-                      <span>{seat.seatId === operatorSeatId ? "Operator seat" : "Hidden identity"}</span>
+                {room.seats.map((seat) => {
+                  const isOpen = room.joinState?.openSeatIds.includes(seat.seatId) ?? (!seat.isConnected && !seat.isReady);
+                  const isClaimed = room.joinState?.claimedSeatIds.includes(seat.seatId) ?? (seat.isConnected && !seat.isReady);
+                  const status = isOpen ? "Open mask" : isClaimed ? "Claimed mask" : "Hidden seat";
+
+                  return (
+                    <div className="seat-line" key={seat.seatId}>
+                      <div>
+                        <strong>{seat.displayName}</strong>
+                        <span>{status}</span>
+                      </div>
+                      <span className={`pill ${seat.isReady ? "accent" : "subtle"}`}>
+                        {seat.isReady ? "Ready" : isOpen ? "Open" : isClaimed ? "Claimed" : "Live"}
+                      </span>
                     </div>
-                    <span className={`pill ${seat.isReady ? "accent" : "subtle"}`}>
-                      {seat.isReady ? "Ready" : "Pending"}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="inline-actions">
                 <Link className="button primary" href={`/rooms/${room.roomId}`}>
-                  Open live room
+                  Enter room
                 </Link>
                 <Link className="button" href={`/results/${room.roomId}`}>
-                  Open result shell
+                  Result view
                 </Link>
               </div>
-
-              {auctionState ? (
-                <div className="stack">
-                  <div className="panel panel-subtle">
-                    <strong>
-                      {auctionState.phase === "settled"
-                        ? `Winner: ${auctionState.winnerSeatId ?? "pending"}`
-                        : canOperatorAct
-                          ? "Your turn as Seat 1"
-                          : `Waiting on ${auctionState.currentTurnSeatId ?? "the room"}`}
-                    </strong>
-                    <p className="muted">
-                      Human and LLM seats stay visually identical. Only Seat 1 is controllable from
-                      this operator console.
-                    </p>
-                  </div>
-
-                  <div className="inline-actions">
-                    <button
-                      className="button"
-                      disabled={!canOperatorAct}
-                      onClick={() =>
-                        void sendAuctionAction(room.roomId, {
-                          type: "auction.bid",
-                          amount: Math.min(
-                            AUCTION_MAX_BID,
-                            auctionState.currentBid + AUCTION_MIN_INCREMENT,
-                          ),
-                        })
-                      }
-                      type="button"
-                    >
-                      Bid +{AUCTION_MIN_INCREMENT}
-                    </button>
-                    <button
-                      className="button"
-                      disabled={!canOperatorAct}
-                      onClick={() =>
-                        void sendAuctionAction(room.roomId, {
-                          type: "auction.bid",
-                          amount: Math.min(
-                            AUCTION_MAX_BID,
-                            auctionState.currentBid + AUCTION_MIN_INCREMENT * 3,
-                          ),
-                        })
-                      }
-                      type="button"
-                    >
-                      Bid +{AUCTION_MIN_INCREMENT * 3}
-                    </button>
-                    <button
-                      className="button"
-                      disabled={!canOperatorAct}
-                      onClick={() =>
-                        void sendAuctionAction(room.roomId, {
-                          type: "auction.pass",
-                        })
-                      }
-                      type="button"
-                    >
-                      Pass
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <Link className="button primary" href={`/games/${room.game}`}>
-                  Review rules
-                </Link>
-              )}
             </article>
           );
         })}

@@ -11,7 +11,10 @@ import type {
   GameKey,
   MatchResult,
   PrivateSeatMetadata,
+  PlayerIdentityKind,
+  PlayerSession,
   PublicMatchSyncState,
+  PublicRoomJoinState,
   PublicRoomState,
   PublicMatchResultSummary,
   PublicReplaySummary,
@@ -20,6 +23,7 @@ import type {
   ReplayEvent,
   RoomId,
   RoomPhase,
+  RoomSessionEnvelope,
   SeatAssignment,
   SeatBackingType,
   SeatId,
@@ -43,6 +47,12 @@ export interface CreateRoomInput<TPublicState = Record<string, unknown>> {
   round?: number;
 }
 
+export interface CreateSessionInput {
+  sessionId?: string;
+  displayName?: string;
+  kind?: PlayerIdentityKind;
+}
+
 export type MatchSyncState = PublicMatchSyncState;
 
 export interface RoomRecord<TPublicState = unknown, TGameState = unknown> {
@@ -54,6 +64,7 @@ export interface RoomRecord<TPublicState = unknown, TGameState = unknown> {
   publicState: TPublicState;
   gameState?: TGameState;
   seats: SeatAssignment[];
+  sessions: PlayerSession[];
   createdAt: string;
   updatedAt: string;
   replay: ReplayEvent[];
@@ -102,6 +113,7 @@ export class InMemoryRoomRuntime {
       publicState: initialized.publicState,
       gameState: initialized.gameState,
       seats,
+      sessions: [],
       createdAt: nowIso,
       updatedAt: nowIso,
       replay: [],
@@ -127,22 +139,142 @@ export class InMemoryRoomRuntime {
   hydrateRooms(rooms: RoomRecord[]): void {
     this.rooms.clear();
     for (const room of rooms) {
-      this.rooms.set(room.roomId, cloneRoomRecord(room));
+      this.rooms.set(room.roomId, normalizeRoomRecord(room));
     }
   }
 
   getRoom(roomId: RoomId): RoomRecord | undefined {
-    return this.rooms.get(roomId);
+    const room = this.rooms.get(roomId);
+    if (!room) {
+      return undefined;
+    }
+
+    const normalized = normalizeRoomRecord(room);
+    this.rooms.set(roomId, normalized);
+    return normalized;
   }
 
   getPublicRoomState(roomId: RoomId): PublicRoomState | undefined {
-    const room = this.rooms.get(roomId);
+    const room = this.getRoom(roomId);
     return room ? this.toPublicRoomState(room) : undefined;
   }
 
-  setSeatConnected(roomId: RoomId, seatId: SeatId, isConnected: boolean): PublicRoomState {
+  createOrRefreshSession<TPublicState = unknown>(
+    roomId: RoomId,
+    input: CreateSessionInput,
+  ): RoomSessionEnvelope<TPublicState> {
+    const room = this.requireRoom(roomId) as RoomRecord<TPublicState>;
+    const nowIso = this.now();
+    const existingSession = input.sessionId
+      ? room.sessions.find((candidate) => candidate.sessionId === input.sessionId)
+      : undefined;
+
+    if (existingSession) {
+      existingSession.lastSeenAt = nowIso;
+      existingSession.status = "active";
+      if (input.displayName?.trim()) {
+        existingSession.displayName = input.displayName.trim();
+      }
+
+      if (existingSession.seatId) {
+        const seat = this.requireSeat(room, existingSession.seatId);
+        seat.publicSeat.isConnected = true;
+      }
+
+      room.updatedAt = nowIso;
+      return {
+        room: this.toPublicRoomState(room),
+        session: { ...existingSession },
+      };
+    }
+
+    if (!isJoinablePhase(room.phase)) {
+      throw new Error("New sessions can only join rooms that are still in lobby or ready state.");
+    }
+
+    const displayName = input.displayName?.trim() || `Guest ${room.sessions.length + 1}`;
+    const sessionId = randomUUID();
+    const session: PlayerSession = {
+      sessionId,
+      playerId: createAnonymousPlayerId(displayName, sessionId),
+      kind: input.kind ?? "anonymous",
+      displayName,
+      roomId,
+      connectedAt: nowIso,
+      lastSeenAt: nowIso,
+      status: "active",
+    };
+
+    room.sessions.push(session);
+    room.updatedAt = nowIso;
+    this.appendEvent(roomId, "room.join", {
+      sessionId,
+      displayName,
+    });
+
+    return {
+      room: this.toPublicRoomState(room),
+      session: { ...session },
+    };
+  }
+
+  claimSeat<TPublicState = unknown>(
+    roomId: RoomId,
+    sessionId: string,
+    seatId: SeatId,
+  ): RoomSessionEnvelope<TPublicState> {
+    const room = this.requireRoom(roomId) as RoomRecord<TPublicState>;
+    if (!isJoinablePhase(room.phase)) {
+      throw new Error("Seats can only be claimed before the room becomes active.");
+    }
+
+    const nowIso = this.now();
+    const session = this.requireSession(room, sessionId);
+    const seat = this.requireSeat(room, seatId);
+    if (seat.privateSeat.backingType !== "human") {
+      throw new Error("Only human seats can be claimed by a browser session.");
+    }
+
+    if (seat.privateSeat.sessionId && seat.privateSeat.sessionId !== sessionId) {
+      throw new Error("That seat is already claimed.");
+    }
+
+    if (session.seatId && session.seatId !== seatId) {
+      throw new Error("This session already controls a different seat.");
+    }
+
+    seat.privateSeat.sessionId = sessionId;
+    seat.privateSeat.playerId = session.playerId;
+    seat.publicSeat.isConnected = true;
+    seat.publicSeat.isReady = false;
+    session.roomId = roomId;
+    session.seatId = seatId;
+    session.lastSeenAt = nowIso;
+    room.updatedAt = nowIso;
+    this.updateLobbyPhase(room);
+
+    this.appendEvent(roomId, "room.claim", {
+      seatId,
+      sessionId,
+    });
+
+    return {
+      room: this.toPublicRoomState(room),
+      session: { ...session },
+    };
+  }
+
+  setSeatConnected(
+    roomId: RoomId,
+    seatId: SeatId,
+    isConnected: boolean,
+    sessionId?: string,
+  ): PublicRoomState {
     const room = this.requireRoom(roomId);
     const seat = this.requireSeat(room, seatId);
+    this.assertSeatControl(room, seat, sessionId, {
+      allowUnclaimedHumanSeat: false,
+    });
     seat.publicSeat.isConnected = isConnected;
     room.updatedAt = this.now();
 
@@ -154,12 +286,21 @@ export class InMemoryRoomRuntime {
     return this.toPublicRoomState(room);
   }
 
-  setSeatReady(roomId: RoomId, seatId: SeatId, isReady: boolean): PublicRoomState {
+  setSeatReady(
+    roomId: RoomId,
+    seatId: SeatId,
+    isReady: boolean,
+    sessionId?: string,
+  ): PublicRoomState {
     const room = this.requireRoom(roomId);
     const seat = this.requireSeat(room, seatId);
+    this.assertSeatControl(room, seat, sessionId, {
+      allowUnclaimedHumanSeat: false,
+    });
     seat.publicSeat.isReady = isReady;
     seat.publicSeat.isConnected = true;
     room.updatedAt = this.now();
+    this.updateLobbyPhase(room);
 
     this.appendEvent(roomId, "room.ready", {
       seatId,
@@ -179,16 +320,23 @@ export class InMemoryRoomRuntime {
           throw new Error("room.ready requires a seatId");
         }
 
-        return this.setSeatReady(roomId, message.seatId, Boolean(message.payload));
+        return this.setSeatReady(
+          roomId,
+          message.seatId,
+          Boolean(message.payload),
+          message.sessionId,
+        );
       case "room.leave":
         if (!message.seatId) {
           throw new Error("room.leave requires a seatId");
         }
 
-        return this.setSeatConnected(roomId, message.seatId, false);
+        return this.setSeatConnected(roomId, message.seatId, false, message.sessionId);
       case "room.heartbeat":
         if (message.seatId) {
-          this.setSeatConnected(roomId, message.seatId, true);
+          this.setSeatConnected(roomId, message.seatId, true, message.sessionId);
+        } else if (message.sessionId) {
+          this.touchSession(room, message.sessionId);
         }
         break;
       case "room.join":
@@ -204,7 +352,7 @@ export class InMemoryRoomRuntime {
         break;
       case "room.action":
         if (gameModules[room.game]) {
-          return this.applyGameAction(roomId, message.seatId, message.payload);
+          return this.applyGameAction(roomId, message.seatId, message.payload, message.sessionId);
         }
 
         this.appendEvent(
@@ -295,6 +443,14 @@ export class InMemoryRoomRuntime {
     room.updatedAt = this.now();
   }
 
+  private touchSession(room: RoomRecord, sessionId: string): PlayerSession {
+    const session = this.requireSession(room, sessionId);
+    session.lastSeenAt = this.now();
+    session.status = "active";
+    room.updatedAt = session.lastSeenAt;
+    return session;
+  }
+
   private initializeGameState<TPublicState>(
     game: GameKey,
     seed: string,
@@ -329,6 +485,7 @@ export class InMemoryRoomRuntime {
     roomId: RoomId,
     seatId: SeatId | undefined,
     payload: unknown,
+    sessionId?: string,
   ): PublicRoomState {
     if (!seatId) {
       throw new Error("room.action requires a seatId.");
@@ -345,6 +502,10 @@ export class InMemoryRoomRuntime {
     }
 
     const nowIso = this.now();
+    const actingSeat = this.requireSeat(room, seatId);
+    this.assertSeatControl(room, actingSeat, sessionId, {
+      allowUnclaimedHumanSeat: false,
+    });
     if (room.phase === "lobby" || room.phase === "ready") {
       room.phase = "active";
     }
@@ -445,6 +606,22 @@ export class InMemoryRoomRuntime {
     return { publicSeat, privateSeat };
   }
 
+  private updateLobbyPhase(room: RoomRecord): void {
+    if (room.phase === "active" || room.phase === "results" || room.phase === "closed") {
+      return;
+    }
+
+    const humanSeats = room.seats.filter((seat) => seat.privateSeat.backingType === "human");
+    if (humanSeats.length === 0) {
+      room.phase = "ready";
+      return;
+    }
+
+    const allClaimed = humanSeats.every((seat) => Boolean(seat.privateSeat.sessionId));
+    const allReady = humanSeats.every((seat) => seat.publicSeat.isReady);
+    room.phase = allClaimed && allReady ? "ready" : "lobby";
+  }
+
   private toPublicRoomState<TPublicState>(room: RoomRecord<TPublicState, unknown>): PublicRoomState<TPublicState> {
     const publicResult: PublicMatchResultSummary | undefined = room.result
       ? {
@@ -459,6 +636,17 @@ export class InMemoryRoomRuntime {
       lastSequence: room.replay.at(-1)?.sequence,
       lastOccurredAt: room.replay.at(-1)?.occurredAt,
     };
+    const joinState: PublicRoomJoinState = {
+      canJoin: isJoinablePhase(room.phase),
+      openSeatIds: isJoinablePhase(room.phase)
+        ? room.seats
+            .filter((seat) => seat.privateSeat.backingType === "human" && !seat.privateSeat.sessionId)
+            .map((seat) => seat.publicSeat.seatId)
+        : [],
+      claimedSeatIds: room.seats
+        .filter((seat) => seat.privateSeat.backingType === "human" && Boolean(seat.privateSeat.sessionId))
+        .map((seat) => seat.publicSeat.seatId),
+    };
 
     return {
       roomId: room.roomId,
@@ -472,11 +660,12 @@ export class InMemoryRoomRuntime {
       publicResult,
       replaySummary,
       matchSync: { ...room.matchSync },
+      joinState,
     };
   }
 
   private requireRoom(roomId: RoomId): RoomRecord {
-    const room = this.rooms.get(roomId);
+    const room = this.getRoom(roomId);
     if (!room) {
       throw new Error(`Unknown room: ${roomId}`);
     }
@@ -492,12 +681,56 @@ export class InMemoryRoomRuntime {
 
     return seat;
   }
+
+  private requireSession(room: RoomRecord, sessionId: string): PlayerSession {
+    const session = room.sessions.find((candidate) => candidate.sessionId === sessionId);
+    if (!session || session.status !== "active") {
+      throw new Error("Session is missing or expired for this room.");
+    }
+
+    return session;
+  }
+
+  private assertSeatControl(
+    room: RoomRecord,
+    seat: SeatAssignment,
+    sessionId: string | undefined,
+    options: { allowUnclaimedHumanSeat: boolean },
+  ): void {
+    if (seat.privateSeat.backingType !== "human") {
+      return;
+    }
+
+    const claimedSessionId = seat.privateSeat.sessionId;
+    if (!claimedSessionId) {
+      if (!options.allowUnclaimedHumanSeat) {
+        throw new Error("Human seats must be claimed before they can be controlled.");
+      }
+      return;
+    }
+
+    if (!sessionId || sessionId !== claimedSessionId) {
+      throw new Error("This session does not control the requested seat.");
+    }
+
+    const session = this.touchSession(room, sessionId);
+    session.seatId = seat.publicSeat.seatId;
+    seat.publicSeat.isConnected = true;
+  }
 }
 
 export function cloneRoomRecord<TPublicState = unknown, TGameState = unknown>(
   room: RoomRecord<TPublicState, TGameState>,
 ): RoomRecord<TPublicState, TGameState> {
-  return JSON.parse(JSON.stringify(room)) as RoomRecord<TPublicState, TGameState>;
+  return normalizeRoomRecord(room) as RoomRecord<TPublicState, TGameState>;
+}
+
+function normalizeRoomRecord<TPublicState = unknown, TGameState = unknown>(
+  room: RoomRecord<TPublicState, TGameState>,
+): RoomRecord<TPublicState, TGameState> {
+  const clone = JSON.parse(JSON.stringify(room)) as RoomRecord<TPublicState, TGameState>;
+  clone.sessions = clone.sessions ?? [];
+  return clone;
 }
 
 function deriveSeatPlayerId(seat: CreateSeatInput, index: number): string {
@@ -508,6 +741,10 @@ function deriveSeatPlayerId(seat: CreateSeatInput, index: number): string {
     `${seat.backingType}-${index + 1}`;
 
   return `${seat.backingType}:${slugify(base)}:${index + 1}`;
+}
+
+function createAnonymousPlayerId(displayName: string, sessionId: string): string {
+  return `anonymous:${slugify(displayName)}:${sessionId.slice(0, 8)}`;
 }
 
 function slugify(value: string): string {
@@ -538,4 +775,8 @@ function deriveRoomCounter(publicState: unknown): number {
   }
 
   return 0;
+}
+
+function isJoinablePhase(phase: RoomPhase): boolean {
+  return phase === "lobby" || phase === "ready";
 }

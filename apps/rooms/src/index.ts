@@ -53,6 +53,8 @@ const server = createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host ?? "localhost"}`);
   const roomMatch = url.pathname.match(/^\/rooms\/([^/]+)$/);
   const replayMatch = url.pathname.match(/^\/rooms\/([^/]+)\/replay$/);
+  const joinMatch = url.pathname.match(/^\/rooms\/([^/]+)\/join$/);
+  const claimMatch = url.pathname.match(/^\/rooms\/([^/]+)\/claim$/);
   const readyMatch = url.pathname.match(/^\/rooms\/([^/]+)\/ready$/);
   const phaseMatch = url.pathname.match(/^\/rooms\/([^/]+)\/phase$/);
   const messageMatch = url.pathname.match(/^\/rooms\/([^/]+)\/messages$/);
@@ -130,8 +132,58 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === "POST" && joinMatch) {
+    const body = (await readJsonBody(request)) as {
+      sessionId?: string;
+      displayName?: string;
+    };
+
+    try {
+      const roomId = joinMatch[1] ?? "";
+      const envelope = runtime.createOrRefreshSession(roomId, body);
+      await persistRoomIfPresent(roomId);
+      writeJson(response, 200, envelope);
+    } catch (error) {
+      writeError(
+        response,
+        400,
+        "room_join_failed",
+        error instanceof Error ? error.message : "Could not join room.",
+      );
+    }
+    return;
+  }
+
+  if (request.method === "POST" && claimMatch) {
+    const body = (await readJsonBody(request)) as {
+      sessionId?: string;
+      seatId?: string;
+    };
+
+    if (!body.sessionId || !body.seatId) {
+      writeError(response, 400, "invalid_payload", "Expected sessionId and seatId.");
+      return;
+    }
+
+    try {
+      const roomId = claimMatch[1] ?? "";
+      const envelope = runtime.claimSeat(roomId, body.sessionId, body.seatId);
+      await persistRoomIfPresent(roomId);
+      writeJson(response, 200, envelope);
+    } catch (error) {
+      writeError(
+        response,
+        400,
+        "seat_claim_failed",
+        error instanceof Error ? error.message : "Could not claim seat.",
+      );
+    }
+    return;
+  }
+
   if (request.method === "POST" && readyMatch) {
     const body = (await readJsonBody(request)) as {
+      sessionId?: string;
       seatId?: string;
       isReady?: boolean;
     };
@@ -143,7 +195,7 @@ const server = createServer(async (request, response) => {
 
     try {
       const roomId = readyMatch[1] ?? "";
-      runtime.setSeatReady(roomId, body.seatId, Boolean(body.isReady));
+      runtime.setSeatReady(roomId, body.seatId, Boolean(body.isReady), body.sessionId);
       const room = await settleRoom(roomId);
       writeJson(response, 200, room);
     } catch (error) {

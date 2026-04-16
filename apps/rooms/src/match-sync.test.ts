@@ -8,7 +8,6 @@ test("syncCompletedRoomIfNeeded forwards a completed room into leaderboard and p
   const runtime = new InMemoryRoomRuntime(() => "2026-04-16T12:00:00.000Z");
   const room = runtime.createRoom({
     game: "auction",
-    phase: "active",
     seats: [
       {
         displayName: "Operator",
@@ -31,9 +30,15 @@ test("syncCompletedRoomIfNeeded forwards a completed room into leaderboard and p
     ],
   });
 
+  const joined = runtime.createOrRefreshSession(room.roomId, {
+    displayName: "Operator",
+  });
+  runtime.claimSeat(room.roomId, joined.session.sessionId, "seat_1");
+
   runtime.handleClientMessage(room.roomId, {
     type: "room.action",
     seatId: "seat_1",
+    sessionId: joined.session.sessionId,
     payload: {
       type: "auction.bid",
       amount: 3,
@@ -133,10 +138,10 @@ test("syncCompletedRoomIfNeeded forwards a completed room into leaderboard and p
   assert.equal(completionCalls[0]?.matchSync.status, "syncing");
   assert.equal(completionCalls[1]?.matchSync.status, "synced");
   assert.equal(completionCalls[1]?.completion.replay.available, true);
-  assert.equal(completionCalls[1]?.completion.seatToPlayerId.seat_1, "demo-player");
+  assert.match(completionCalls[1]?.completion.seatToPlayerId.seat_1 ?? "", /^anonymous:operator:/);
 
   const settlementPayload = calls.find((call) => call.url.endsWith("/payments/settlements"))
     ?.body as { seatToPlayerId: Record<string, string> };
-  assert.equal(settlementPayload.seatToPlayerId.seat_1, "demo-player");
+  assert.match(settlementPayload.seatToPlayerId.seat_1 ?? "", /^anonymous:operator:/);
   assert.match(settlementPayload.seatToPlayerId.seat_2, /^llm:/);
 });
