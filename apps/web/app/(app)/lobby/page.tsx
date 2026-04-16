@@ -25,6 +25,7 @@ export default async function LobbyPage() {
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/leaderboard">Leaderboard</Link>
+            <Link href="/results">Results</Link>
             <Link href="/payments">Payments</Link>
           </nav>
         </div>

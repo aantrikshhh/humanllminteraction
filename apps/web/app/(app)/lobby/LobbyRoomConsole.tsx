@@ -238,6 +238,15 @@ export default function LobbyRoomConsole({ initialRooms }: LobbyRoomConsoleProps
                 ))}
               </div>
 
+              <div className="inline-actions">
+                <Link className="button primary" href={`/rooms/${room.roomId}`}>
+                  Open live room
+                </Link>
+                <Link className="button" href={`/results/${room.roomId}`}>
+                  Open result shell
+                </Link>
+              </div>
+
               {auctionState ? (
                 <div className="stack">
                   <div className="panel panel-subtle">

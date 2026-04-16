@@ -15,6 +15,7 @@ export default async function LeaderboardPage() {
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
+            <Link href="/results">Results</Link>
             <Link href="/payments">Payments</Link>
           </nav>
         </div>

@@ -1,4 +1,4 @@
-import type { GameKey, PublicRoomState, PublicSeatView } from "@arena/contracts";
+import type { GameKey, PublicRoomState, PublicSeatView, ReplayEnvelope } from "@arena/contracts";
 import type { LeaderboardSnapshot, RankedGame } from "@arena/leaderboard";
 import type { PlayerPaymentsSnapshot } from "@arena/payments";
 
@@ -18,7 +18,7 @@ const apiBaseUrl = process.env.API_BASE_URL ?? "http://127.0.0.1:4010";
 
 const demoSeats: PublicSeatView[] = [
   {
-    seatId: "seat-1",
+    seatId: "seat_1",
     displayName: "Seat 1",
     avatarId: "mask-amber",
     isConnected: true,
@@ -26,7 +26,7 @@ const demoSeats: PublicSeatView[] = [
     score: 9,
   },
   {
-    seatId: "seat-2",
+    seatId: "seat_2",
     displayName: "Seat 2",
     avatarId: "mask-cyan",
     isConnected: true,
@@ -34,7 +34,7 @@ const demoSeats: PublicSeatView[] = [
     score: 4,
   },
   {
-    seatId: "seat-3",
+    seatId: "seat_3",
     displayName: "Seat 3",
     avatarId: "mask-rose",
     isConnected: true,
@@ -42,7 +42,7 @@ const demoSeats: PublicSeatView[] = [
     score: 2,
   },
   {
-    seatId: "seat-4",
+    seatId: "seat_4",
     displayName: "Seat 4",
     avatarId: "mask-verdant",
     isConnected: true,
@@ -60,9 +60,43 @@ const fallbackRooms: PublicRoomState[] = [
     round: 3,
     seats: demoSeats,
     publicState: {
-      pot: 24,
+      itemName: "Signal Relay",
+      itemValue: 30,
       currentBid: 6,
-      currentTurnSeatId: "seat-3",
+      currentPot: 24,
+      currentLeaderSeatId: "seat_1",
+      currentTurnSeatId: "seat_3",
+      turnIndex: 6,
+      turnsRemaining: 5,
+      maxTurns: 16,
+      phase: "bidding",
+      viewerCanAct: false,
+      seats: [
+        {
+          ...demoSeats[0],
+          committedBid: 6,
+          hasPassed: false,
+          isLeader: true,
+        },
+        {
+          ...demoSeats[1],
+          committedBid: 4,
+          hasPassed: false,
+          isLeader: false,
+        },
+        {
+          ...demoSeats[2],
+          committedBid: 2,
+          hasPassed: false,
+          isLeader: false,
+        },
+        {
+          ...demoSeats[3],
+          committedBid: 5,
+          hasPassed: true,
+          isLeader: false,
+        },
+      ],
     },
     lastEventAt: "2026-04-16T09:30:00.000Z",
   },
@@ -78,7 +112,7 @@ const fallbackRooms: PublicRoomState[] = [
     })),
     publicState: {
       pot: 12,
-      proposalSeatId: "seat-1",
+      proposalSeatId: "seat_1",
     },
     lastEventAt: "2026-04-16T09:26:00.000Z",
   },
@@ -239,6 +273,30 @@ export async function getRoomsSnapshot(): Promise<ServiceSnapshot<PublicRoomStat
   const data = await readJson<PublicRoomState[]>(`${roomsBaseUrl}/rooms`);
   return {
     data: data ?? fallbackRooms,
+    source: data ? "live" : "fallback",
+    baseUrl: roomsBaseUrl,
+  };
+}
+
+export async function getRoomSnapshot(
+  roomId: string,
+): Promise<ServiceSnapshot<PublicRoomState | null>> {
+  const data = await readJson<PublicRoomState>(`${roomsBaseUrl}/rooms/${encodeURIComponent(roomId)}`);
+  return {
+    data: data ?? fallbackRooms.find((room) => room.roomId === roomId) ?? null,
+    source: data ? "live" : "fallback",
+    baseUrl: roomsBaseUrl,
+  };
+}
+
+export async function getReplaySnapshot(
+  roomId: string,
+): Promise<ServiceSnapshot<ReplayEnvelope | null>> {
+  const data = await readJson<ReplayEnvelope>(
+    `${roomsBaseUrl}/rooms/${encodeURIComponent(roomId)}/replay`,
+  );
+  return {
+    data: data ?? null,
     source: data ? "live" : "fallback",
     baseUrl: roomsBaseUrl,
   };

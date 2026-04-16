@@ -1,0 +1,368 @@
+.heroBand {
+  overflow: hidden;
+}
+
+.emptyState {
+  min-height: 180px;
+  display: grid;
+  align-content: center;
+  gap: 10px;
+}
+
+.pageStack {
+  display: grid;
+  gap: 24px;
+}
+
+.stageGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+.stageSurface {
+  overflow: hidden;
+}
+
+.stageHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.roomTitle {
+  font-family: var(--font-display), serif;
+  font-size: clamp(2.1rem, 1.8rem + 1.4vw, 3.4rem);
+  margin: 0 0 8px;
+  line-height: 0.95;
+}
+
+.warningPanel {
+  margin-bottom: 16px;
+}
+
+.poster {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  padding: 22px;
+  border: 1px solid rgba(168, 203, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(11, 22, 37, 0.96), rgba(5, 10, 18, 0.92)),
+    radial-gradient(circle at 10% 10%, rgba(82, 213, 255, 0.18), transparent 22%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.posterGlow {
+  position: absolute;
+  inset: auto -8% -18% 42%;
+  height: 260px;
+  background: radial-gradient(circle, rgba(108, 242, 200, 0.16), transparent 62%);
+  pointer-events: none;
+}
+
+.posterTop,
+.auctionBand,
+.genericBand,
+.seatStage {
+  position: relative;
+  z-index: 1;
+}
+
+.posterTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.posterLabel {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.posterValue {
+  font-size: 1.15rem;
+  margin-top: 6px;
+}
+
+.posterMeta {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.posterMeta span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.posterMeta strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.auctionBand {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.auctionMetric {
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid rgba(168, 203, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 8px;
+}
+
+.auctionMetric span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.auctionMetric strong {
+  font-size: 1.35rem;
+}
+
+.genericBand {
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(168, 203, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.genericBand p {
+  margin: 8px 0 0;
+}
+
+.seatStage {
+  display: grid;
+  gap: 12px;
+}
+
+.seatCard {
+  --seat-accent: #d3def8;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(168, 203, 255, 0.1);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--seat-accent) 10%, transparent), transparent 45%),
+    rgba(255, 255, 255, 0.03);
+}
+
+.seatFrame {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.seatMask {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display), serif;
+  font-size: 1.05rem;
+  color: #061019;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.65), transparent 22%),
+    linear-gradient(160deg, var(--seat-accent), color-mix(in srgb, var(--seat-accent) 56%, #0b1627));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+.seatGlyph {
+  position: absolute;
+  inset: auto -6px -6px auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #0d1726;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+}
+
+.seatCopy {
+  min-width: 0;
+}
+
+.seatHeadline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.seatCopy p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.seatStats {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  text-align: right;
+}
+
+.seatStats span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.turnSignal {
+  color: var(--accent);
+}
+
+.leaderSignal {
+  color: #f3c26f;
+}
+
+.sidebarStack {
+  display: grid;
+  gap: 16px;
+}
+
+.operatorSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.operatorSummary div {
+  border-radius: 16px;
+  border: 1px solid rgba(168, 203, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.operatorSummary span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.operatorSummary strong {
+  font-size: 1.1rem;
+}
+
+.turnPanel p {
+  margin: 8px 0 0;
+}
+
+.actionGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.genericStatePanel p {
+  margin: 8px 0 0;
+}
+
+.telemetryList {
+  display: grid;
+  gap: 10px;
+}
+
+.telemetryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(168, 203, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px 14px;
+}
+
+.telemetryRow span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.publicStateBlock {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(168, 203, 255, 0.12);
+  background: rgba(5, 11, 17, 0.72);
+}
+
+.publicStateLabel {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(168, 203, 255, 0.08);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+}
+
+.publicStateBlock pre {
+  margin: 0;
+  padding: 14px;
+  font-size: 0.8rem;
+  overflow: auto;
+  color: #d9e7ff;
+}
+
+@media (max-width: 1080px) {
+  .stageGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebarStack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .stageHeader,
+  .posterTop,
+  .seatCard {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .auctionBand,
+  .operatorSummary,
+  .sidebarStack {
+    grid-template-columns: 1fr;
+  }
+
+  .seatStats {
+    justify-items: start;
+    text-align: left;
+  }
+}

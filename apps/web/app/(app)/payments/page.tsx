@@ -16,6 +16,7 @@ export default async function PaymentsPage() {
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
             <Link href="/leaderboard">Leaderboard</Link>
+            <Link href="/results">Results</Link>
           </nav>
         </div>
 
