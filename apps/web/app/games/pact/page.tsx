@@ -3,6 +3,7 @@ import Link from "next/link";
 import { pactBrief, pactModule } from "@arena/game-pact";
 
 import { getRoomsSnapshot } from "../../../lib/service-data";
+import { GameSuiteMasthead } from "../GameSuiteMasthead";
 
 import {
   contentPlan,
@@ -35,6 +36,14 @@ export default async function PactPage() {
   return (
     <main className={`app-shell ${styles.page}`}>
       <div className={`shell ${styles.stack}`}>
+        <GameSuiteMasthead
+          currentGame="pact"
+          statusLabel={pactStatus.label}
+          statusDetail={pactStatus.detail}
+          primaryHref={pactStatus.ctaHref}
+          primaryLabel={pactStatus.ctaLabel}
+        />
+
         <section className={styles.hero}>
           <div className={styles.heroCopy}>
             <div>

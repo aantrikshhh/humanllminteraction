@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auctionBrief, auctionModule } from "@arena/game-auction";
 
 import { getRoomsSnapshot } from "../../../lib/service-data";
+import { GameSuiteMasthead } from "../GameSuiteMasthead";
 
 import {
   AUCTION_MAX_BID,
@@ -31,6 +32,14 @@ export default async function AuctionPage() {
   return (
     <main className={`app-shell ${styles.page}`}>
       <div className={`shell ${styles.stack}`}>
+        <GameSuiteMasthead
+          currentGame="auction"
+          statusLabel={auctionStatus.label}
+          statusDetail={auctionStatus.detail}
+          primaryHref={auctionStatus.ctaHref}
+          primaryLabel={auctionStatus.ctaLabel}
+        />
+
         <section className={styles.hero}>
           <div className={styles.heroCopy}>
             <div>

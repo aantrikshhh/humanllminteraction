@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { vaultBrief, vaultModule } from "@arena/game-vault";
 
 import { getRoomsSnapshot } from "../../../lib/service-data";
+import { GameSuiteMasthead } from "../GameSuiteMasthead";
 
 import {
   buildVaultDemoState,
@@ -30,6 +31,14 @@ export default async function VaultGamePage() {
   return (
     <main className={`app-shell ${styles.page}`}>
       <div className={`shell ${styles.stack}`}>
+        <GameSuiteMasthead
+          currentGame="vault"
+          statusLabel={vaultStatus.label}
+          statusDetail={vaultStatus.detail}
+          primaryHref={vaultStatus.ctaHref}
+          primaryLabel={vaultStatus.ctaLabel}
+        />
+
         <section className={styles.hero}>
           <div className={styles.heroCopy}>
             <div>

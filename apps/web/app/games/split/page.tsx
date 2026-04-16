@@ -3,6 +3,7 @@ import Link from "next/link";
 import { splitBrief, splitModule } from "@arena/game-split";
 
 import { getRoomsSnapshot } from "../../../lib/service-data";
+import { GameSuiteMasthead } from "../GameSuiteMasthead";
 
 import {
   contentPlan,
@@ -59,6 +60,14 @@ export default async function SplitPage() {
   return (
     <main className={`app-shell ${styles.page}`}>
       <div className={`shell ${styles.stack}`}>
+        <GameSuiteMasthead
+          currentGame="split"
+          statusLabel={splitStatus.label}
+          statusDetail={splitStatus.detail}
+          primaryHref={splitStatus.ctaHref}
+          primaryLabel={splitStatus.ctaLabel}
+        />
+
         <section className={styles.hero}>
           <div className={styles.heroCopy}>
             <div>
