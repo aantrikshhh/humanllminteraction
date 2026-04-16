@@ -1,33 +1,83 @@
-[
-  {
-    "assetId": "kenney-pixel-ui-pack-buttons",
-    "source": "Kenney",
-    "pack": "Pixel UI Pack",
-    "assetPath": "ui/button_blue.png",
-    "author": "Kenney",
-    "assetUrl": "https://kenney.nl/assets/pixel-ui-pack",
-    "license": "CC0",
-    "licenseUrl": "https://kenney.nl/support",
-    "requiredAttribution": false,
-    "creditText": "Pixel UI Pack by Kenney",
-    "usedIn": [
-      "web:lobby",
-      "web:results"
-    ]
-  },
-  {
-    "assetId": "0x72-dungeon-ui-frame",
-    "source": "0x72",
-    "pack": "DungeonUI",
-    "assetPath": "frames/panel_bordered.png",
-    "author": "0x72",
-    "assetUrl": "https://0x72.itch.io/dungeonui",
-    "license": "CC0",
-    "licenseUrl": "https://0x72.itch.io/dungeonui",
-    "requiredAttribution": true,
-    "creditText": "DungeonUI by 0x72",
-    "usedIn": [
-      "game:auction:hud"
-    ]
-  }
-]
+{
+  "version": 1,
+  "generatedAt": "2026-04-16T00:00:00.000Z",
+  "assets": [
+    {
+      "assetId": "kenney-pixel-ui-pack-buttons",
+      "sourceId": "kenney",
+      "source": "Kenney",
+      "pack": "Pixel UI Pack",
+      "assetName": "Blue button set",
+      "assetPath": "ui/button_blue.png",
+      "author": "Kenney",
+      "assetUrl": "https://kenney.nl/assets/pixel-ui-pack",
+      "license": "CC0",
+      "licenseUrl": "https://kenney.nl/support",
+      "requiredAttribution": false,
+      "creditText": "Blue button set from Pixel UI Pack by Kenney, licensed CC0: https://kenney.nl/assets/pixel-ui-pack",
+      "usedIn": [
+        "web:lobby",
+        "web:results",
+        "web:credits"
+      ],
+      "notes": "Primary house-style UI source."
+    },
+    {
+      "assetId": "0x72-dungeon-ui-frame",
+      "sourceId": "0x72",
+      "source": "0x72",
+      "pack": "DungeonUI",
+      "assetName": "Bordered panel frame",
+      "assetPath": "frames/panel_bordered.png",
+      "author": "0x72",
+      "assetUrl": "https://0x72.itch.io/dungeonui",
+      "license": "CC0",
+      "licenseUrl": "https://0x72.itch.io/dungeonui",
+      "requiredAttribution": false,
+      "creditText": "Bordered panel frame from DungeonUI by 0x72, licensed CC0: https://0x72.itch.io/dungeonui",
+      "usedIn": [
+        "game:auction:hud",
+        "web:credits"
+      ],
+      "notes": "Approved supplemental UI framing pack."
+    },
+    {
+      "assetId": "0x72-dungeontileset-market-stall",
+      "sourceId": "0x72",
+      "source": "0x72",
+      "pack": "16x16 DungeonTileset II",
+      "assetName": "Market stall tiles",
+      "assetPath": "tiles/market_stall.png",
+      "author": "0x72",
+      "assetUrl": "https://0x72.itch.io/dungeontileset-ii",
+      "license": "CC0",
+      "licenseUrl": "https://0x72.itch.io/dungeontileset-ii",
+      "requiredAttribution": false,
+      "creditText": "Market stall tiles from 16x16 DungeonTileset II by 0x72, licensed CC0: https://0x72.itch.io/dungeontileset-ii",
+      "usedIn": [
+        "game:auction:board",
+        "web:credits"
+      ],
+      "notes": "Use for retro market scenes only after palette normalization."
+    },
+    {
+      "assetId": "ansimuz-top-down-banner-flags",
+      "sourceId": "ansimuz",
+      "source": "ansimuz",
+      "pack": "Patreons Top Down Collection",
+      "assetName": "Market banner and flags",
+      "assetPath": "decor/banner_flags.png",
+      "author": "ansimuz",
+      "assetUrl": "https://ansimuz.itch.io/patreons-top-down-collection",
+      "license": "Commercial use allowed, credit appreciated",
+      "licenseUrl": "https://ansimuz.itch.io/magical-road-pixel-art-environment",
+      "requiredAttribution": false,
+      "creditText": "Market banner and flags from Patreons Top Down Collection by ansimuz: https://ansimuz.itch.io/patreons-top-down-collection",
+      "usedIn": [
+        "game:settlement:plaza",
+        "web:credits"
+      ],
+      "notes": "Supplemental environment flavor source; keep palette aligned with the house style."
+    }
+  ]
+}

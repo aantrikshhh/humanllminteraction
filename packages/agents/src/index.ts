@@ -1,9 +1,12 @@
 export type {
+  AgentAdapterCatalogEntry,
   AgentAdapterRegistration,
+  AgentModelProfile,
   AgentMoveFallbackReason,
   AgentMoveOutcome,
   AgentMoveRequest,
   AgentMoveResult,
+  AgentPromptProfile,
   AgentRuntimeAdapter,
   AgentRuntimeClock,
   AgentRuntimeErrorCode,
@@ -11,14 +14,19 @@ export type {
   AgentRuntimeRegistryOptions,
   AgentRuntimeRequestOptions,
   AgentRuntimeSleeper,
+  AgentTimingProfile,
   CuratedSkillName,
 } from "./types";
 
 export {
+  applyTimingProfileToPolicy,
+  clampPolicyToDeadline,
   DEFAULT_AGENT_RUNTIME_POLICY,
+  DEFAULT_AGENT_TIMING_PROFILES,
   computeAgentThinkTimeMs,
   isAgentControlledSeat,
   normalizeAgentRuntimePolicy,
+  resolveAgentTimingProfile,
 } from "./policy";
 
 export {
@@ -73,4 +81,3 @@ export const CURATED_REPO_SKILLS = [
   "winui-app",
   "yeet",
 ] as const;
-

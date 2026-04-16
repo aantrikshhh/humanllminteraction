@@ -25,6 +25,33 @@ export interface AgentRuntimePolicy {
   fallbackModelId?: string;
 }
 
+export interface AgentPromptProfile {
+  id: string;
+  label?: string;
+  description?: string;
+  games?: readonly GameKey[];
+}
+
+export interface AgentTimingProfile {
+  id: string;
+  label?: string;
+  description?: string;
+  minThinkTimeMs?: number;
+  maxThinkTimeMs?: number;
+}
+
+export interface AgentModelProfile {
+  id: string;
+  label?: string;
+  provider?: string;
+  description?: string;
+  reasoningEffort?: "low" | "medium" | "high" | "xhigh";
+  supportsGames?: readonly GameKey[];
+  defaultPromptVersionId?: string;
+  defaultTimingProfileId?: string;
+  recommendedSkills?: readonly CuratedSkillName[];
+}
+
 export interface AgentRuntimeAdapter<TPublicState = unknown, TAction = unknown> {
   id: string;
   supports(game: GameKey): boolean;
@@ -51,6 +78,7 @@ export interface AgentRuntimeRequestOptions {
 export type AgentRuntimeErrorCode =
   | "adapter_error"
   | "human_seat"
+  | "invalid_action"
   | "missing_adapter"
   | "timeout"
   | "unsupported_game";
@@ -58,6 +86,7 @@ export type AgentRuntimeErrorCode =
 export type AgentMoveFallbackReason =
   | "adapter_error"
   | "human_seat"
+  | "invalid_action"
   | "missing_adapter"
   | "unsupported_game"
   | "timeout";
@@ -78,6 +107,19 @@ export interface AgentMoveOutcome<TAction = unknown> extends AgentMoveResult<TAc
 export interface AgentAdapterRegistration {
   aliases?: readonly string[];
   fallback?: boolean;
+  modelProfile?: Partial<AgentModelProfile>;
+  promptProfiles?: readonly AgentPromptProfile[];
+  timingProfiles?: readonly AgentTimingProfile[];
+}
+
+export interface AgentAdapterCatalogEntry {
+  adapterId: string;
+  aliases: readonly string[];
+  fallback: boolean;
+  supportedGames: readonly GameKey[];
+  modelProfile: AgentModelProfile;
+  promptProfiles: readonly AgentPromptProfile[];
+  timingProfiles: readonly AgentTimingProfile[];
 }
 
 export interface AgentRuntimeRegistryOptions {

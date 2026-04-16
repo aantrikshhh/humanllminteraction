@@ -15,8 +15,9 @@ export default async function PaymentsPage() {
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
-            <Link href="/leaderboard">Leaderboard</Link>
+            <Link href="/rooms">Rooms</Link>
             <Link href="/results">Results</Link>
+            <Link href="/leaderboard">Leaderboard</Link>
           </nav>
         </div>
 
@@ -52,9 +53,17 @@ export default async function PaymentsPage() {
                     Source: <code>{paymentsSnapshot.baseUrl}</code>
                   </p>
                 </div>
-                <Link className="button" href="/lobby">
-                  Back to lobby
-                </Link>
+                <div className="inline-actions">
+                  <Link className="button" href="/results">
+                    Result index
+                  </Link>
+                  <Link className="button" href="/leaderboard">
+                    Leaderboard
+                  </Link>
+                  <Link className="button" href="/lobby">
+                    Lobby
+                  </Link>
+                </div>
               </div>
 
               <div className="metric-grid metric-grid-large">
@@ -127,6 +136,29 @@ export default async function PaymentsPage() {
                       <span>{payout.currency}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              <div className="panel">
+                <div className="section-row">
+                  <h2>Where next</h2>
+                  <span className="pill subtle">Post-match</span>
+                </div>
+                <div className="compact-list">
+                  <div className="compact-row">
+                    <div>
+                      <strong>Inspect the room catalog</strong>
+                      <span>Jump back to live rooms if you want to watch the next match form.</span>
+                    </div>
+                    <Link href="/rooms">Open rooms</Link>
+                  </div>
+                  <div className="compact-row">
+                    <div>
+                      <strong>Audit result surfaces</strong>
+                      <span>Review settled matches without revealing which seats were model-backed.</span>
+                    </div>
+                    <Link href="/results">Open results</Link>
+                  </div>
                 </div>
               </div>
             </div>

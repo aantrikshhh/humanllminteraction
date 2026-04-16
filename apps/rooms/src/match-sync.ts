@@ -1,5 +1,10 @@
 import { resolveLeaderboardMatch } from "@arena/leaderboard";
-import type { GameKey, SeatAssignment, SeatId } from "@arena/contracts";
+import type {
+  GameKey,
+  MatchCompletionEnvelope,
+  SeatAssignment,
+  SeatId,
+} from "@arena/contracts";
 
 import type { InMemoryRoomRuntime, RoomRecord } from "./runtime.js";
 
@@ -43,6 +48,8 @@ export function createMatchSyncService(options: MatchSyncServiceOptions = {}) {
     }));
 
     try {
+      await publishCompletion(fetchImpl, apiBaseUrl, runtime.getRoom(roomId));
+
       const resolvedMatch = resolveLeaderboardMatch(room.result, room.seats);
       await postJson(fetchImpl, `${apiBaseUrl}/leaderboard/matches/apply`, {
         match: resolvedMatch,
@@ -66,12 +73,14 @@ export function createMatchSyncService(options: MatchSyncServiceOptions = {}) {
         syncedAt: now(),
         lastError: undefined,
       }));
+      await publishCompletion(fetchImpl, apiBaseUrl, runtime.getRoom(roomId));
     } catch (error) {
       runtime.updateMatchSync(roomId, (current) => ({
         ...current,
         status: "failed",
         lastError: error instanceof Error ? error.message : "match sync failed",
       }));
+      await publishCompletion(fetchImpl, apiBaseUrl, runtime.getRoom(roomId), true);
     }
   }
 
@@ -126,6 +135,28 @@ async function postJson<TResponse>(
   return (await response.json()) as TResponse;
 }
 
+async function publishCompletion(
+  fetchImpl: typeof fetch,
+  apiBaseUrl: string,
+  room: RoomRecord | undefined,
+  swallowErrors = false,
+): Promise<void> {
+  if (!room?.result) {
+    return;
+  }
+
+  try {
+    await postJson(fetchImpl, `${apiBaseUrl}/matches/completions`, {
+      completion: toMatchCompletionEnvelope(room),
+      matchSync: room.matchSync,
+    });
+  } catch (error) {
+    if (!swallowErrors) {
+      throw error;
+    }
+  }
+}
+
 function toSeatToPlayerId(assignments: SeatAssignment[]): Record<SeatId, string> {
   return assignments.reduce<Record<SeatId, string>>((accumulator, assignment) => {
     const playerId = assignment.privateSeat.playerId;
@@ -136,6 +167,27 @@ function toSeatToPlayerId(assignments: SeatAssignment[]): Record<SeatId, string>
     accumulator[assignment.publicSeat.seatId] = playerId;
     return accumulator;
   }, {});
+}
+
+function toMatchCompletionEnvelope(room: RoomRecord): MatchCompletionEnvelope {
+  if (!room.result) {
+    throw new Error(`Room ${room.roomId} is missing a completed match result`);
+  }
+
+  return {
+    matchId: room.matchId,
+    roomId: room.roomId,
+    game: room.game,
+    completedAt: room.result.completedAt,
+    result: room.result,
+    replay: {
+      matchId: room.matchId,
+      roomId: room.roomId,
+      available: room.replay.length > 0,
+      eventCount: room.replay.length || undefined,
+    },
+    seatToPlayerId: toSeatToPlayerId(room.seats),
+  };
 }
 
 function getMatchPrizeUsd(game: GameKey): number {

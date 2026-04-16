@@ -15,6 +15,7 @@ export default async function LeaderboardPage() {
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
+            <Link href="/rooms">Rooms</Link>
             <Link href="/results">Results</Link>
             <Link href="/payments">Payments</Link>
           </nav>
@@ -51,9 +52,17 @@ export default async function LeaderboardPage() {
                   Source: <code>{leaderboardSnapshot.baseUrl}</code>
                 </p>
               </div>
-              <Link className="button" href="/lobby">
-                Back to lobby
-              </Link>
+              <div className="inline-actions">
+                <Link className="button" href="/rooms">
+                  Live rooms
+                </Link>
+                <Link className="button" href="/results">
+                  Result index
+                </Link>
+                <Link className="button" href="/lobby">
+                  Lobby
+                </Link>
+              </div>
             </div>
 
             <div className="table-panel">
@@ -86,6 +95,36 @@ export default async function LeaderboardPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <div className="panel">
+              <div className="section-row">
+                <h2>Follow-through</h2>
+                <span className="pill subtle">Operator flow</span>
+              </div>
+              <div className="compact-list">
+                <div className="compact-row">
+                  <div>
+                    <strong>Watch a room live</strong>
+                    <span>Use the room catalog to open the stage before the next settled result lands.</span>
+                  </div>
+                  <Link href="/rooms">Open rooms</Link>
+                </div>
+                <div className="compact-row">
+                  <div>
+                    <strong>Audit completed matches</strong>
+                    <span>Result pages keep standings, replay access, and payouts seat-blinded.</span>
+                  </div>
+                  <Link href="/results">Open results</Link>
+                </div>
+                <div className="compact-row">
+                  <div>
+                    <strong>Check payout state</strong>
+                    <span>Use the payment surface to inspect the current simulated escrow lifecycle.</span>
+                  </div>
+                  <Link href="/payments">Open payments</Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>

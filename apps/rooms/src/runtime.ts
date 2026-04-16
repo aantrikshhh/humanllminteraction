@@ -11,7 +11,10 @@ import type {
   GameKey,
   MatchResult,
   PrivateSeatMetadata,
+  PublicMatchSyncState,
   PublicRoomState,
+  PublicMatchResultSummary,
+  PublicReplaySummary,
   PublicSeatView,
   ReplayEnvelope,
   ReplayEvent,
@@ -40,13 +43,7 @@ export interface CreateRoomInput<TPublicState = Record<string, unknown>> {
   round?: number;
 }
 
-export interface MatchSyncState {
-  status: "pending" | "syncing" | "synced" | "failed";
-  attempts: number;
-  lastAttemptAt?: string;
-  syncedAt?: string;
-  lastError?: string;
-}
+export type MatchSyncState = PublicMatchSyncState;
 
 export interface RoomRecord<TPublicState = unknown, TGameState = unknown> {
   roomId: RoomId;
@@ -125,6 +122,13 @@ export class InMemoryRoomRuntime {
 
   listRooms(): PublicRoomState[] {
     return [...this.rooms.values()].map((room) => this.toPublicRoomState(room));
+  }
+
+  hydrateRooms(rooms: RoomRecord[]): void {
+    this.rooms.clear();
+    for (const room of rooms) {
+      this.rooms.set(room.roomId, cloneRoomRecord(room));
+    }
   }
 
   getRoom(roomId: RoomId): RoomRecord | undefined {
@@ -442,6 +446,20 @@ export class InMemoryRoomRuntime {
   }
 
   private toPublicRoomState<TPublicState>(room: RoomRecord<TPublicState, unknown>): PublicRoomState<TPublicState> {
+    const publicResult: PublicMatchResultSummary | undefined = room.result
+      ? {
+          completedAt: room.result.completedAt,
+          winningSeatIds: room.result.winningSeatIds,
+          seatScores: room.result.seatScores,
+        }
+      : undefined;
+    const replaySummary: PublicReplaySummary = {
+      available: room.replay.length > 0,
+      eventCount: room.replay.length || undefined,
+      lastSequence: room.replay.at(-1)?.sequence,
+      lastOccurredAt: room.replay.at(-1)?.occurredAt,
+    };
+
     return {
       roomId: room.roomId,
       matchId: room.matchId,
@@ -451,6 +469,9 @@ export class InMemoryRoomRuntime {
       seats: room.seats.map((seat) => ({ ...seat.publicSeat })),
       publicState: room.publicState,
       lastEventAt: room.updatedAt,
+      publicResult,
+      replaySummary,
+      matchSync: { ...room.matchSync },
     };
   }
 
@@ -471,6 +492,12 @@ export class InMemoryRoomRuntime {
 
     return seat;
   }
+}
+
+export function cloneRoomRecord<TPublicState = unknown, TGameState = unknown>(
+  room: RoomRecord<TPublicState, TGameState>,
+): RoomRecord<TPublicState, TGameState> {
+  return JSON.parse(JSON.stringify(room)) as RoomRecord<TPublicState, TGameState>;
 }
 
 function deriveSeatPlayerId(seat: CreateSeatInput, index: number): string {

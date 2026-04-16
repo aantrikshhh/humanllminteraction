@@ -37,13 +37,16 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
       <main className="app-shell">
         <div className="shell stack">
           <div className="topbar topbar-app">
-            <div className="brand">ARENA</div>
-            <nav className="nav">
-              <Link href="/">Overview</Link>
-              <Link href="/lobby">Lobby</Link>
-              <Link href="/results">Results</Link>
-            </nav>
-          </div>
+          <div className="brand">ARENA</div>
+          <nav className="nav">
+            <Link href="/">Overview</Link>
+            <Link href="/lobby">Lobby</Link>
+            <Link href="/rooms">Rooms</Link>
+            <Link href="/results">Results</Link>
+            <Link href="/leaderboard">Leaderboard</Link>
+            <Link href="/payments">Payments</Link>
+          </nav>
+        </div>
 
           <section className="workspace">
             <div className="stack">
@@ -65,17 +68,35 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
     );
   }
 
+  const ledger = snapshot.matchLedger;
   const orderedSeats = [...room.seats].sort((left, right) => {
     return (right.score ?? 0) - (left.score ?? 0);
   });
-  const winningScore = orderedSeats[0]?.score ?? 0;
-  const winners = orderedSeats.filter((seat) => (seat.score ?? 0) === winningScore);
+  const publicResult = ledger?.publicResult ?? room.publicResult;
+  const matchSync = ledger?.matchSync ?? room.matchSync;
+  const winningSeatIds = publicResult?.winningSeatIds ?? [];
+  const winningScore =
+    publicResult?.winningSeatIds.length && publicResult.seatScores
+      ? Math.max(
+          ...publicResult.winningSeatIds.map((seatId) => publicResult?.seatScores[seatId] ?? 0),
+        )
+      : (orderedSeats[0]?.score ?? 0);
+  const winners =
+    winningSeatIds.length > 0
+      ? orderedSeats.filter((seat) => winningSeatIds.includes(seat.seatId))
+      : orderedSeats.filter((seat) => (seat.score ?? 0) === winningScore);
   const replayEvents = snapshot.replay?.events ?? [];
   const lastEvents = replayEvents.slice(-4).reverse();
   const leadMargin =
     orderedSeats.length > 1 ? winningScore - (orderedSeats[1]?.score ?? 0) : winningScore;
-  const projectedPrize = getProjectedPrizeUsd(room.game);
-  const payoutSplit = winners.length > 0 ? projectedPrize / winners.length : 0;
+  const projectedPrize = ledger?.payments?.totalPayoutUsd ?? getProjectedPrizeUsd(room.game);
+  const winnerPayouts = ledger?.seatImpacts.filter((impact) => impact.isWinner && impact.payout);
+  const payoutSplit =
+    winnerPayouts && winnerPayouts.length > 0
+      ? winnerPayouts.reduce((sum, impact) => sum + (impact.payout?.amountUsd ?? 0), 0) / winnerPayouts.length
+      : winners.length > 0
+        ? projectedPrize / winners.length
+        : 0;
   const replayUrl =
     snapshot.source === "live"
       ? `/api/rooms/${encodeURIComponent(room.roomId)}/replay`
@@ -95,7 +116,9 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
+            <Link href="/rooms">Rooms</Link>
             <Link href="/leaderboard">Leaderboard</Link>
+            <Link href="/results">Results</Link>
             <Link href="/payments">Payments</Link>
           </nav>
         </div>
@@ -184,11 +207,37 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                     {snapshot.state === "completed" ? formatUsd(payoutSplit) : "Pending"}
                   </strong>
                 </div>
-                <div className={styles.callout}>
-                  <span className={styles.calloutLabel}>Leaderboard sync</span>
-                  <strong className={styles.calloutValue}>
-                    {snapshot.state === "completed" ? "Awaiting match-level delta" : "Blocked"}
-                  </strong>
+              <div className={styles.callout}>
+                <span className={styles.calloutLabel}>Leaderboard sync</span>
+                <strong className={styles.calloutValue}>
+                  {snapshot.state === "completed"
+                      ? matchSync?.status ?? ledger?.status ?? "Awaiting match-level delta"
+                      : "Blocked"}
+                </strong>
+              </div>
+            </div>
+
+              <div className="section-row">
+                <div>
+                  <h2>Continue through the operator loop</h2>
+                  <p className="muted">
+                    Move between the live room, result index, ladder, and payout surface without
+                    losing the room context.
+                  </p>
+                </div>
+                <div className="inline-actions">
+                  <Link className="button" href={`/rooms/${room.roomId}`}>
+                    Live room
+                  </Link>
+                  <Link className="button" href="/results">
+                    Result index
+                  </Link>
+                  <Link className="button" href="/leaderboard">
+                    Leaderboard
+                  </Link>
+                  <Link className="button" href="/payments">
+                    Payments
+                  </Link>
                 </div>
               </div>
 
@@ -202,6 +251,16 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                   </div>
                   <span className="pill subtle">{labelGame(room.game)}</span>
                 </div>
+                {matchSync ? (
+                  <div className="panel panel-subtle">
+                    <strong>Match sync {matchSync.status}</strong>
+                    <p className="muted">
+                      Attempts {matchSync.attempts}
+                      {matchSync.syncedAt ? ` · synced ${formatTimestamp(matchSync.syncedAt)}` : ""}
+                      {matchSync.lastError ? ` · ${matchSync.lastError}` : ""}
+                    </p>
+                  </div>
+                ) : null}
                 <div className={styles.outcomeRail}>
                   {orderedSeats.map((seat, index) => (
                     <div className={styles.outcomeRow} key={seat.seatId}>
@@ -258,27 +317,40 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
               <div className="panel">
                 <div className="section-row">
                   <h2>Leaderboard impact</h2>
-                  <span className="pill subtle">Placeholder</span>
+                  <span className="pill subtle">{ledger ? "Live" : "Placeholder"}</span>
                 </div>
                 <div className={styles.placeholderBlock}>
-                  {orderedSeats.slice(0, 3).map((seat, index) => (
-                    <div className={styles.placeholderStat} key={`ladder-${seat.seatId}`}>
-                      <strong>
-                        {index + 1}. {seat.displayName}
-                      </strong>
-                      <span className={styles.supportCopy}>
-                        Public seat results are ready. Match-level rating deltas need a dedicated
-                        API read surface keyed by room or match.
-                      </span>
-                    </div>
-                  ))}
+                  {ledger
+                    ? ledger.seatImpacts.map((impact, index) => (
+                        <div className={styles.placeholderStat} key={`ladder-${impact.seatId}`}>
+                          <strong>
+                            {index + 1}. {impact.displayName}
+                          </strong>
+                          <span className={styles.supportCopy}>
+                            {impact.leaderboard
+                              ? `${impact.leaderboard.delta >= 0 ? "+" : ""}${impact.leaderboard.delta} rating · now ${impact.leaderboard.newRating} · ${impact.leaderboard.wins} wins`
+                              : "No leaderboard delta recorded for this seat yet."}
+                          </span>
+                        </div>
+                      ))
+                    : orderedSeats.slice(0, 3).map((seat, index) => (
+                        <div className={styles.placeholderStat} key={`ladder-${seat.seatId}`}>
+                          <strong>
+                            {index + 1}. {seat.displayName}
+                          </strong>
+                          <span className={styles.supportCopy}>
+                            Public seat results are ready. Match-level rating deltas need a dedicated
+                            API read surface keyed by room or match.
+                          </span>
+                        </div>
+                      ))}
                 </div>
               </div>
 
               <div className="panel">
                 <div className="section-row">
                   <h2>Payout summary</h2>
-                  <span className="pill subtle">Placeholder</span>
+                  <span className="pill subtle">{ledger?.payments ? "Live" : "Placeholder"}</span>
                 </div>
                 <div className={styles.placeholderBlock}>
                   <div className={styles.placeholderStat}>
@@ -292,10 +364,23 @@ export default async function ResultsRoomPage({ params }: ResultsRoomPageProps) 
                       Winner share {snapshot.state === "completed" ? formatUsd(payoutSplit) : "Pending"}
                     </strong>
                     <span className={styles.supportCopy}>
-                      The public UI can show totals, but a match-level payout lookup is still needed
-                      to replace this placeholder with live settlement state.
+                      {ledger?.payments
+                        ? `Escrow ${ledger.payments.escrowId} settled ${formatTimestamp(ledger.payments.settledAt)}.`
+                        : "The public UI can show totals, but a match-level payout lookup is still needed to replace this placeholder with live settlement state."}
                     </span>
                   </div>
+                  {ledger?.seatImpacts
+                    .filter((impact) => impact.payout)
+                    .map((impact) => (
+                      <div className={styles.placeholderStat} key={`payout-${impact.seatId}`}>
+                        <strong>
+                          {impact.displayName} · {formatUsd(impact.payout?.amountUsd ?? 0)}
+                        </strong>
+                        <span className={styles.supportCopy}>
+                          {impact.payout?.currency} · {impact.payout?.lifecycleStatus}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
 

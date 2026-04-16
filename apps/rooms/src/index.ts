@@ -4,11 +4,16 @@ import type { ClientMessage, GameKey, SeatBackingType } from "@arena/contracts";
 
 import { isAutomationCandidate, processAutomatedTurns } from "./automation.js";
 import { createMatchSyncService } from "./match-sync.js";
+import {
+  createRoomPersistenceFromEnv,
+  restoreRuntimeFromPersistence,
+} from "./persistence.js";
 import { InMemoryRoomRuntime } from "./runtime.js";
 
 const port = Number(process.env.PORT ?? 4011);
 const runtime = new InMemoryRoomRuntime();
 const matchSync = createMatchSyncService();
+const persistence = createRoomPersistenceFromEnv();
 
 const readJsonBody = async (request: IncomingMessage) => {
   const chunks: Buffer[] = [];
@@ -57,6 +62,7 @@ const server = createServer(async (request, response) => {
       service: "@arena/rooms",
       status: "ok",
       rooms: runtime.listRooms().length,
+      persistenceEnabled: persistence.enabled,
     });
     return;
   }
@@ -68,8 +74,10 @@ const server = createServer(async (request, response) => {
   }
 
   if (request.method === "GET" && roomMatch) {
-    await matchSync.syncCompletedRoomIfNeeded(runtime, roomMatch[1] ?? "");
-    const room = runtime.getPublicRoomState(roomMatch[1] ?? "");
+    const roomId = roomMatch[1] ?? "";
+    await matchSync.syncCompletedRoomIfNeeded(runtime, roomId);
+    await persistRoomIfPresent(roomId);
+    const room = runtime.getPublicRoomState(roomId);
     if (!room) {
       writeError(response, 404, "room_not_found", "Room does not exist.");
       return;
@@ -93,7 +101,7 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-    if (request.method === "POST" && url.pathname === "/rooms/bootstrap") {
+  if (request.method === "POST" && url.pathname === "/rooms/bootstrap") {
     const body = (await readJsonBody(request)) as {
       game?: GameKey;
       publicState?: Record<string, unknown>;
@@ -114,12 +122,9 @@ const server = createServer(async (request, response) => {
       publicState: body.publicState ?? {},
       seats: body.seats,
     });
+    await persistRoomIfPresent(room.roomId);
 
-    if (isAutomationCandidate(runtime.getRoom(room.roomId))) {
-      await processAutomatedTurns(runtime, room.roomId);
-    }
-
-    await matchSync.syncCompletedRoomIfNeeded(runtime, room.roomId);
+    await settleRoom(room.roomId);
 
     writeJson(response, 201, runtime.getPublicRoomState(room.roomId));
     return;
@@ -138,11 +143,8 @@ const server = createServer(async (request, response) => {
 
     try {
       const roomId = readyMatch[1] ?? "";
-      const room = runtime.setSeatReady(roomId, body.seatId, Boolean(body.isReady));
-      if (isAutomationCandidate(runtime.getRoom(roomId))) {
-        await processAutomatedTurns(runtime, roomId);
-      }
-      await matchSync.syncCompletedRoomIfNeeded(runtime, roomId);
+      runtime.setSeatReady(roomId, body.seatId, Boolean(body.isReady));
+      const room = await settleRoom(roomId);
       writeJson(response, 200, room);
     } catch (error) {
       writeError(
@@ -168,11 +170,8 @@ const server = createServer(async (request, response) => {
 
     try {
       const roomId = phaseMatch[1] ?? "";
-      const room = runtime.setRoomPhase(roomId, body.phase, body.round);
-      if (isAutomationCandidate(runtime.getRoom(roomId))) {
-        await processAutomatedTurns(runtime, roomId);
-      }
-      await matchSync.syncCompletedRoomIfNeeded(runtime, roomId);
+      runtime.setRoomPhase(roomId, body.phase, body.round);
+      const room = await settleRoom(roomId);
       writeJson(response, 200, room);
     } catch (error) {
       writeError(
@@ -194,11 +193,8 @@ const server = createServer(async (request, response) => {
 
     try {
       const roomId = messageMatch[1] ?? "";
-      const room = runtime.handleClientMessage(roomId, body);
-      if (isAutomationCandidate(runtime.getRoom(roomId))) {
-        await processAutomatedTurns(runtime, roomId);
-      }
-      await matchSync.syncCompletedRoomIfNeeded(runtime, roomId);
+      runtime.handleClientMessage(roomId, body);
+      const room = await settleRoom(roomId);
       writeJson(response, 200, room);
     } catch (error) {
       writeError(
@@ -214,15 +210,57 @@ const server = createServer(async (request, response) => {
   writeError(response, 404, "not_found", "Route not found.");
 });
 
-server.listen(port, () => {
-  console.log(`@arena/rooms listening on http://localhost:${port}`);
+void startServer().catch((error) => {
+  console.error("@arena/rooms failed to start", error);
+  process.exitCode = 1;
 });
 
 async function syncCompletedRooms(): Promise<void> {
   const jobs = runtime
     .listRooms()
     .filter((room) => room.phase === "results")
-    .map((room) => matchSync.syncCompletedRoomIfNeeded(runtime, room.roomId));
+    .map(async (room) => {
+      await matchSync.syncCompletedRoomIfNeeded(runtime, room.roomId);
+      await persistRoomIfPresent(room.roomId);
+    });
 
   await Promise.all(jobs);
+}
+
+async function settleRoom(roomId: string) {
+  await persistRoomIfPresent(roomId);
+
+  if (isAutomationCandidate(runtime.getRoom(roomId))) {
+    await processAutomatedTurns(runtime, roomId);
+    await persistRoomIfPresent(roomId);
+  }
+
+  await matchSync.syncCompletedRoomIfNeeded(runtime, roomId);
+  await persistRoomIfPresent(roomId);
+
+  const room = runtime.getPublicRoomState(roomId);
+  if (!room) {
+    throw new Error(`Unknown room: ${roomId}`);
+  }
+
+  return room;
+}
+
+async function persistRoomIfPresent(roomId: string): Promise<void> {
+  const room = runtime.getRoom(roomId);
+  if (!room) {
+    return;
+  }
+
+  await persistence.saveRoom(room);
+}
+
+async function startServer(): Promise<void> {
+  const restoredRoomCount = await restoreRuntimeFromPersistence(runtime, persistence);
+
+  server.listen(port, () => {
+    console.log(
+      `@arena/rooms listening on http://localhost:${port} (restored ${restoredRoomCount} rooms)`,
+    );
+  });
 }

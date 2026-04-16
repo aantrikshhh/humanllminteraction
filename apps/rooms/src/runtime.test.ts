@@ -143,6 +143,9 @@ test("stores match result and exposes replay envelope", () => {
   const replay = runtime.buildReplay(room.roomId);
 
   assert.equal(publicRoom?.phase, "results");
+  assert.equal(publicRoom?.publicResult?.completedAt, result.completedAt);
+  assert.equal(publicRoom?.replaySummary?.available, true);
+  assert.equal(publicRoom?.matchSync?.status, "pending");
   assert.equal(replay.events.at(-1)?.type, "match.result");
 });
 

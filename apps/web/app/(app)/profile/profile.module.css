@@ -1,0 +1,373 @@
+.hero {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.95fr);
+}
+
+.identityPanel {
+  background:
+    radial-gradient(circle at top left, rgba(231, 122, 44, 0.28), transparent 34%),
+    linear-gradient(145deg, rgba(16, 22, 34, 0.96), rgba(7, 11, 19, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  overflow: hidden;
+  padding: 1.5rem;
+  position: relative;
+}
+
+.identityPanel::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  content: "";
+  height: 1px;
+  left: 1.5rem;
+  position: absolute;
+  right: 1.5rem;
+  top: 5.8rem;
+}
+
+.identityTopline {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: space-between;
+}
+
+.operatorStamp {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  gap: 0.5rem;
+  letter-spacing: 0.16em;
+  padding: 0.5rem 0.8rem;
+  text-transform: uppercase;
+}
+
+.operatorStamp::before {
+  background: #e77a2c;
+  border-radius: 999px;
+  content: "";
+  height: 0.55rem;
+  width: 0.55rem;
+}
+
+.identityGrid {
+  align-items: end;
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-top: 1.75rem;
+}
+
+.identityCopy {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.kicker {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.84rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.displayName {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 5rem);
+  line-height: 0.96;
+  margin: 0;
+}
+
+.codename {
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.identityNote {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 40rem;
+}
+
+.badgeColumn {
+  display: grid;
+  gap: 0.8rem;
+  justify-items: end;
+}
+
+.rankBadge,
+.walletBadge {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  min-width: 12rem;
+  padding: 0.9rem 1rem;
+}
+
+.rankBadge span,
+.walletBadge span {
+  color: rgba(255, 255, 255, 0.6);
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+}
+
+.rankBadge strong,
+.walletBadge strong {
+  display: block;
+  font-size: 1.4rem;
+}
+
+.walletBadge code {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.82rem;
+}
+
+.metricsRail {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metricTile {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+}
+
+.metricTile span {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metricTile strong {
+  font-size: 1.55rem;
+}
+
+.metaPanel {
+  display: grid;
+  gap: 1rem;
+}
+
+.sourceGrid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.sourceRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.sourceRow strong {
+  font-size: 0.95rem;
+}
+
+.sourceRow span {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.82rem;
+}
+
+.pillLive,
+.pillFallback,
+.pillPrivate,
+.pillLocked,
+.pillWin,
+.pillPending {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  padding: 0.3rem 0.65rem;
+  text-transform: uppercase;
+}
+
+.pillLive {
+  background: rgba(80, 194, 129, 0.16);
+  color: #8ce1a9;
+}
+
+.pillFallback {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.pillPrivate {
+  background: rgba(83, 144, 255, 0.16);
+  color: #9bc0ff;
+}
+
+.pillLocked {
+  background: rgba(231, 122, 44, 0.14);
+  color: #ffb277;
+}
+
+.pillWin {
+  background: rgba(80, 194, 129, 0.16);
+  color: #8ce1a9;
+}
+
+.pillPending {
+  background: rgba(255, 212, 102, 0.16);
+  color: #ffd97c;
+}
+
+.historyHeader {
+  align-items: flex-end;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.historyHeader p {
+  margin: 0.4rem 0 0;
+  max-width: 40rem;
+}
+
+.historyList {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.historyRow {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.95fr) auto;
+  padding: 1rem 1.1rem;
+}
+
+.historyPrimary {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.historyTopline {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.historyTitle {
+  font-size: 1.02rem;
+  margin: 0;
+}
+
+.historyMeta {
+  color: rgba(255, 255, 255, 0.65);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.historySecondary {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.historySecondary span {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.84rem;
+}
+
+.historySecondary strong {
+  font-size: 1rem;
+}
+
+.historyAction {
+  align-self: center;
+  justify-self: end;
+}
+
+.buttonGhost {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: inherit;
+  display: inline-flex;
+  font-size: 0.84rem;
+  gap: 0.4rem;
+  padding: 0.65rem 0.9rem;
+  text-decoration: none;
+}
+
+.ruleList {
+  display: grid;
+  gap: 0.8rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ruleList li {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.6;
+  padding-top: 0.8rem;
+}
+
+.ruleList li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.identityStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.identityChip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.75rem;
+}
+
+@media (max-width: 1120px) {
+  .hero,
+  .identityGrid,
+  .historyRow {
+    grid-template-columns: 1fr;
+  }
+
+  .badgeColumn,
+  .historyAction {
+    justify-items: start;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 780px) {
+  .metricsRail {
+    grid-template-columns: 1fr;
+  }
+
+  .displayName {
+    font-size: 2.7rem;
+  }
+
+  .identityPanel,
+  .historyRow {
+    border-radius: 20px;
+  }
+}

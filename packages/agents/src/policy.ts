@@ -1,4 +1,8 @@
-import type { AgentMoveRequest, AgentRuntimePolicy } from "./types";
+import type {
+  AgentMoveRequest,
+  AgentRuntimePolicy,
+  AgentTimingProfile,
+} from "./types";
 
 import { clampNumber, hashString, integerOrDefault, stableStringify } from "./utils";
 
@@ -8,6 +12,37 @@ export const DEFAULT_AGENT_RUNTIME_POLICY: Readonly<AgentRuntimePolicy> = {
   maxThinkTimeMs: 400,
   retryCount: 0,
 };
+
+export const DEFAULT_AGENT_TIMING_PROFILES: readonly AgentTimingProfile[] = [
+  {
+    id: "instant",
+    label: "Instant",
+    description: "Useful for CI or deterministic scripted seats.",
+    minThinkTimeMs: 0,
+    maxThinkTimeMs: 0,
+  },
+  {
+    id: "snappy",
+    label: "Snappy",
+    description: "Fast but still human-looking for tight multiplayer loops.",
+    minThinkTimeMs: 90,
+    maxThinkTimeMs: 220,
+  },
+  {
+    id: "deliberate",
+    label: "Deliberate",
+    description: "Balanced hidden-seat pacing for normal turns.",
+    minThinkTimeMs: 180,
+    maxThinkTimeMs: 520,
+  },
+  {
+    id: "cinematic",
+    label: "Cinematic",
+    description: "Longer pacing for high-suspense turns and demo rooms.",
+    minThinkTimeMs: 450,
+    maxThinkTimeMs: 1_100,
+  },
+] as const;
 
 export function normalizeAgentRuntimePolicy(
   policy: Partial<AgentRuntimePolicy> = {},
@@ -41,8 +76,9 @@ export function computeAgentThinkTimeMs<TPublicState, TAction>(
   request: AgentMoveRequest<TPublicState, TAction>,
   policy: AgentRuntimePolicy,
   adapterId: string,
+  timingProfile?: AgentTimingProfile,
 ): number {
-  const normalizedPolicy = normalizeAgentRuntimePolicy(policy);
+  const normalizedPolicy = applyTimingProfileToPolicy(policy, timingProfile);
 
   if (normalizedPolicy.maxThinkTimeMs <= normalizedPolicy.minThinkTimeMs) {
     return normalizedPolicy.minThinkTimeMs;
@@ -73,6 +109,52 @@ export function isAgentControlledSeat(backingType: AgentMoveRequest["privateSeat
   return backingType !== "human";
 }
 
+export function resolveAgentTimingProfile(
+  timingProfileId: string | undefined,
+  timingProfiles: readonly AgentTimingProfile[] = DEFAULT_AGENT_TIMING_PROFILES,
+): AgentTimingProfile | undefined {
+  const normalizedId = normalizeOptionalString(timingProfileId);
+  if (!normalizedId) {
+    return undefined;
+  }
+
+  return timingProfiles.find((profile) => profile.id === normalizedId);
+}
+
+export function applyTimingProfileToPolicy(
+  policy: Partial<AgentRuntimePolicy>,
+  timingProfile: AgentTimingProfile | undefined,
+): AgentRuntimePolicy {
+  const normalizedPolicy = normalizeAgentRuntimePolicy(policy);
+
+  if (!timingProfile) {
+    return normalizedPolicy;
+  }
+
+  return normalizeAgentRuntimePolicy({
+    ...normalizedPolicy,
+    minThinkTimeMs: timingProfile.minThinkTimeMs ?? normalizedPolicy.minThinkTimeMs,
+    maxThinkTimeMs: timingProfile.maxThinkTimeMs ?? normalizedPolicy.maxThinkTimeMs,
+  });
+}
+
+export function clampPolicyToDeadline(
+  policy: AgentRuntimePolicy,
+  deadlineIso: string,
+  nowMs: number,
+): AgentRuntimePolicy {
+  const deadlineMs = Date.parse(deadlineIso);
+  if (!Number.isFinite(deadlineMs)) {
+    return normalizeAgentRuntimePolicy(policy);
+  }
+
+  const remainingMs = Math.max(1, Math.trunc(deadlineMs - nowMs));
+  return normalizeAgentRuntimePolicy({
+    ...policy,
+    requestTimeoutMs: Math.min(policy.requestTimeoutMs, remainingMs),
+  });
+}
+
 function normalizeOptionalString(value: string | undefined): string | undefined {
   if (typeof value !== "string") {
     return undefined;
@@ -81,4 +163,3 @@ function normalizeOptionalString(value: string | undefined): string | undefined 
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
 }
-

@@ -77,6 +77,10 @@ test("syncCompletedRoomIfNeeded forwards a completed room into leaderboard and p
         );
       }
 
+      if (url.endsWith("/matches/completions")) {
+        return new Response(JSON.stringify({ ok: true }), { status: 201 });
+      }
+
       if (url.endsWith("/payments/escrows")) {
         const escrowId = `escrow-${room.matchId}`;
         escrowResponses.set(escrowId, { escrowId });
@@ -101,6 +105,10 @@ test("syncCompletedRoomIfNeeded forwards a completed room into leaderboard and p
   assert.equal(syncedRoom?.matchSync.status, "synced");
   assert.equal(syncedRoom?.matchSync.attempts, 1);
   assert.equal(
+    calls.filter((call) => call.url.endsWith("/matches/completions")).length,
+    2,
+  );
+  assert.equal(
     calls.filter((call) => call.url.endsWith("/leaderboard/matches/apply")).length,
     1,
   );
@@ -112,6 +120,20 @@ test("syncCompletedRoomIfNeeded forwards a completed room into leaderboard and p
   const leaderboardPayload = calls.find((call) => call.url.endsWith("/leaderboard/matches/apply"))
     ?.body as { match: { participants: Array<{ playerId: string }> } };
   assert.ok(leaderboardPayload.match.participants.length >= 2);
+
+  const completionCalls = calls
+    .filter((call) => call.url.endsWith("/matches/completions"))
+    .map((call) => call.body) as Array<{
+    completion: {
+      replay: { available: boolean; eventCount?: number };
+      seatToPlayerId: Record<string, string>;
+    };
+    matchSync: { status: string };
+  }>;
+  assert.equal(completionCalls[0]?.matchSync.status, "syncing");
+  assert.equal(completionCalls[1]?.matchSync.status, "synced");
+  assert.equal(completionCalls[1]?.completion.replay.available, true);
+  assert.equal(completionCalls[1]?.completion.seatToPlayerId.seat_1, "demo-player");
 
   const settlementPayload = calls.find((call) => call.url.endsWith("/payments/settlements"))
     ?.body as { seatToPlayerId: Record<string, string> };

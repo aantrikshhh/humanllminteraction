@@ -6,6 +6,32 @@ export type MatchId = string;
 export type RoomId = string;
 export type PlayerId = string;
 export type SeatId = string;
+export type SessionId = string;
+
+export type PlayerIdentityKind = "anonymous" | "invite" | "wallet" | "registered";
+export type MatchSyncStatus = "pending" | "syncing" | "synced" | "failed";
+
+export interface PlayerIdentity {
+  playerId: PlayerId;
+  kind: PlayerIdentityKind;
+  displayName: string;
+  walletAddress?: string;
+  inviteCode?: string;
+  createdAt: string;
+  lastSeenAt?: string;
+}
+
+export interface PlayerSession {
+  sessionId: SessionId;
+  playerId?: PlayerId;
+  kind: PlayerIdentityKind;
+  displayName?: string;
+  roomId?: RoomId;
+  seatId?: SeatId;
+  connectedAt: string;
+  lastSeenAt: string;
+  status: "active" | "expired";
+}
 
 export interface PublicSeatView {
   seatId: SeatId;
@@ -30,6 +56,27 @@ export interface SeatAssignment {
   privateSeat: PrivateSeatMetadata;
 }
 
+export interface PublicMatchSyncState {
+  status: MatchSyncStatus;
+  attempts: number;
+  lastAttemptAt?: string;
+  syncedAt?: string;
+  lastError?: string;
+}
+
+export interface PublicReplaySummary {
+  available: boolean;
+  eventCount?: number;
+  lastSequence?: number;
+  lastOccurredAt?: string;
+}
+
+export interface PublicMatchResultSummary {
+  completedAt: string;
+  winningSeatIds: SeatId[];
+  seatScores: Record<SeatId, number>;
+}
+
 export interface PublicRoomState<TPublicState = unknown> {
   roomId: RoomId;
   matchId: MatchId;
@@ -39,6 +86,9 @@ export interface PublicRoomState<TPublicState = unknown> {
   seats: PublicSeatView[];
   publicState: TPublicState;
   lastEventAt: string;
+  publicResult?: PublicMatchResultSummary;
+  replaySummary?: PublicReplaySummary;
+  matchSync?: PublicMatchSyncState;
 }
 
 export interface ClientMessage<TPayload = unknown> {
@@ -101,6 +151,23 @@ export interface MatchResult {
   behavioralOutput: BehavioralOutput[];
 }
 
+export interface MatchReplayReference {
+  matchId: MatchId;
+  roomId: RoomId;
+  available: boolean;
+  eventCount?: number;
+}
+
+export interface MatchCompletionEnvelope {
+  matchId: MatchId;
+  roomId: RoomId;
+  game: GameKey;
+  completedAt: string;
+  result: MatchResult;
+  replay: MatchReplayReference;
+  seatToPlayerId: Partial<Record<SeatId, PlayerId>>;
+}
+
 export interface LeaderboardEntry {
   game: GameKey | "global";
   playerId: PlayerId;
@@ -120,4 +187,3 @@ export interface PayoutRecord {
   status: "pending" | "ready" | "paid" | "failed";
   createdAt: string;
 }
-

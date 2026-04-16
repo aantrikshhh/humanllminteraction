@@ -16,6 +16,9 @@ export default async function LobbyPage() {
     getLeaderboardSnapshot("global", 5),
     getPaymentsSnapshot("demo-player"),
   ]);
+  const liveRoom =
+    roomsSnapshot.data.find((room) => room.phase !== "results") ?? roomsSnapshot.data[0] ?? null;
+  const settledRoom = roomsSnapshot.data.find((room) => room.phase === "results") ?? null;
 
   return (
     <main className="app-shell">
@@ -24,8 +27,9 @@ export default async function LobbyPage() {
           <div className="brand">ARENA</div>
           <nav className="nav">
             <Link href="/">Overview</Link>
-            <Link href="/leaderboard">Leaderboard</Link>
+            <Link href="/rooms">Rooms</Link>
             <Link href="/results">Results</Link>
+            <Link href="/leaderboard">Leaderboard</Link>
             <Link href="/payments">Payments</Link>
           </nav>
         </div>
@@ -59,11 +63,68 @@ export default async function LobbyPage() {
 
         <div className="dashboard-grid">
           <section className="workspace">
-            <LobbyRoomConsole initialRooms={roomsSnapshot.data} />
+            <div className="stack">
+              <div className="section-row">
+                <div>
+                  <h2>Room controls</h2>
+                  <p className="muted">
+                    Create or advance a room here, then move laterally into the live room shell or
+                    public result surface.
+                  </p>
+                </div>
+                <div className="inline-actions">
+                  <Link className="button" href="/rooms">
+                    Room catalog
+                  </Link>
+                  <Link className="button" href="/results">
+                    Result index
+                  </Link>
+                </div>
+              </div>
+              <LobbyRoomConsole initialRooms={roomsSnapshot.data} />
+            </div>
           </section>
 
           <aside className="sidebar sidebar-wide">
             <div className="stack">
+              <div className="panel">
+                <div className="section-row">
+                  <h2>Operator rail</h2>
+                  <span className="pill subtle">Fast path</span>
+                </div>
+                <div className="compact-list">
+                  <div className="compact-row">
+                    <div>
+                      <strong>Browse room catalog</strong>
+                      <span>See every live or settled room in one place.</span>
+                    </div>
+                    <Link href="/rooms">Open</Link>
+                  </div>
+                  <div className="compact-row">
+                    <div>
+                      <strong>{liveRoom ? "Jump into the active room" : "Open the room stage"}</strong>
+                      <span>
+                        {liveRoom
+                          ? `${liveRoom.roomId} · ${liveRoom.game} · ${liveRoom.phase}`
+                          : "Use the room page once a lobby session has been created."}
+                      </span>
+                    </div>
+                    <Link href={liveRoom ? `/rooms/${liveRoom.roomId}` : "/rooms"}>Open</Link>
+                  </div>
+                  <div className="compact-row">
+                    <div>
+                      <strong>{settledRoom ? "Review the latest settled room" : "Browse result surfaces"}</strong>
+                      <span>
+                        {settledRoom
+                          ? `${settledRoom.roomId} is ready for payout and ladder follow-through.`
+                          : "Use the result index or seeded preview while the runtime is still active."}
+                      </span>
+                    </div>
+                    <Link href={settledRoom ? `/results/${settledRoom.roomId}` : "/results"}>Open</Link>
+                  </div>
+                </div>
+              </div>
+
               <div className="panel">
                 <div className="section-row">
                   <h2>Top Ladder</h2>

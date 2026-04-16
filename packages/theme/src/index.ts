@@ -1,17 +1,4 @@
-export interface AssetManifestEntry {
-  assetId: string;
-  source: string;
-  pack: string;
-  assetPath: string;
-  author: string;
-  assetUrl: string;
-  license: string;
-  licenseUrl: string;
-  requiredAttribution: boolean;
-  creditText: string;
-  usedIn: string[];
-  notes?: string;
-}
+export * from "./asset-manifest";
 
 export interface SceneTheme {
   id: string;
@@ -25,5 +12,5 @@ export interface SceneTheme {
 
 export interface ThemeRegistry {
   scenes: SceneTheme[];
-  assets: AssetManifestEntry[];
+  assets: import("./asset-manifest").AssetManifestEntry[];
 }

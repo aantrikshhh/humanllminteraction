@@ -25,6 +25,8 @@ export default async function RoomPage({ params }: RoomPageProps) {
           <nav className="nav">
             <Link href="/">Overview</Link>
             <Link href="/lobby">Lobby</Link>
+            <Link href="/rooms">Rooms</Link>
+            <Link href="/results">Results</Link>
             <Link href="/leaderboard">Leaderboard</Link>
             <Link href="/payments">Payments</Link>
           </nav>
@@ -58,10 +60,34 @@ export default async function RoomPage({ params }: RoomPageProps) {
         </section>
 
         {roomSnapshot.data ? (
-          <RoomPageClient
-            initialRoom={roomSnapshot.data as PublicRoomState}
-            initialSource={roomSnapshot.source}
-          />
+          <section className="workspace">
+            <div className="stack">
+              <div className="section-row">
+                <div>
+                  <h2>Room loop</h2>
+                  <p className="muted">
+                    Stay on the live stage, then move directly into the public result, rankings, or
+                    payout surface once the room settles.
+                  </p>
+                </div>
+                <div className="inline-actions">
+                  <Link className="button" href="/rooms">
+                    Room catalog
+                  </Link>
+                  <Link className="button" href={`/results/${roomId}`}>
+                    Result view
+                  </Link>
+                  <Link className="button" href="/payments">
+                    Payments
+                  </Link>
+                </div>
+              </div>
+              <RoomPageClient
+                initialRoom={roomSnapshot.data as PublicRoomState}
+                initialSource={roomSnapshot.source}
+              />
+            </div>
+          </section>
         ) : (
           <section className="workspace">
             <div className="stack">
@@ -72,9 +98,17 @@ export default async function RoomPage({ params }: RoomPageProps) {
                     This room is not available from the current runtime or fallback snapshot.
                   </p>
                 </div>
-                <Link className="button" href="/lobby">
-                  Return to lobby
-                </Link>
+                <div className="inline-actions">
+                  <Link className="button" href="/rooms">
+                    Room catalog
+                  </Link>
+                  <Link className="button" href="/results">
+                    Result index
+                  </Link>
+                  <Link className="button" href="/lobby">
+                    Lobby
+                  </Link>
+                </div>
               </div>
               <div className={`panel ${styles.emptyState}`}>
                 <strong>No room snapshot was returned for this id.</strong>
