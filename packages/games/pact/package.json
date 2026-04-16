@@ -7,6 +7,8 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test:smoke": "tsx ../../../tests/simulations/pact-smoke.ts"
+    "test:smoke": "tsx ../../../tests/simulations/pact-smoke.ts",
+    "test:strategies": "tsx ../../../tests/simulations/pact-strategies.ts",
+    "test:regression": "node --import tsx --test ../../../tests/simulations/pact-regression.test.ts"
   }
 }

@@ -34,9 +34,9 @@ interface CreateRoomTemplate {
 const roomTemplates: CreateRoomTemplate[] = [
   {
     game: "auction",
-    title: "Auction",
+    title: "Auction Solo",
     strap: "Fast bluffing pressure",
-    detail: "One human bidder enters a four-seat auction against three hidden rivals.",
+    detail: "One human bidder enters a four-seat auction against three hidden rivals for the fastest solo demo path.",
     players: "1 human + 3 hidden agents",
     payload: {
       game: "auction",
@@ -49,6 +49,32 @@ const roomTemplates: CreateRoomTemplate[] = [
           llmModelId: "auction-shadow-1",
           promptVersionId: "auction-hidden-v1",
         },
+        {
+          displayName: "Mask 3",
+          avatarId: "mask-rose",
+          backingType: "llm",
+          llmModelId: "auction-shadow-2",
+          promptVersionId: "auction-hidden-v1",
+        },
+        {
+          displayName: "Mask 4",
+          avatarId: "mask-verdant",
+          backingType: "scripted",
+        },
+      ],
+    },
+  },
+  {
+    game: "auction",
+    title: "Auction Live",
+    strap: "Two humans, two hidden seats",
+    detail: "The strongest on-camera multiplayer demo: two claimed human masks inside a four-seat hidden-identity auction.",
+    players: "2 humans + 2 hidden agents",
+    payload: {
+      game: "auction",
+      seats: [
+        { displayName: "Mask 1", avatarId: "mask-amber", backingType: "human" },
+        { displayName: "Mask 2", avatarId: "mask-cyan", backingType: "human" },
         {
           displayName: "Mask 3",
           avatarId: "mask-rose",

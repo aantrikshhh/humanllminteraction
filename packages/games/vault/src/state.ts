@@ -353,6 +353,7 @@ function summarizeVaultBehavior(state: VaultPrivateState): BehavioralOutput[] {
   const allContributions = resolvedRounds.flatMap((round) =>
     Object.values(round.contributions),
   );
+  const zeroContributionCount = allContributions.filter((value) => value === 0).length;
   const totalAccusations = resolvedRounds.reduce(
     (sum, round) => sum + Object.keys(round.accusations).length,
     0,
@@ -385,6 +386,14 @@ function summarizeVaultBehavior(state: VaultPrivateState): BehavioralOutput[] {
       metricKey: "vault.average_pool_total",
       value: roundCount === 0 ? 0 : Number((totalPool / roundCount).toFixed(2)),
       unit: "credits",
+    },
+    {
+      metricKey: "vault.zero_contribution_rate",
+      value:
+        allContributions.length === 0
+          ? 0
+          : Number((zeroContributionCount / allContributions.length).toFixed(3)),
+      unit: "ratio",
     },
     {
       metricKey: "vault.correct_detections",

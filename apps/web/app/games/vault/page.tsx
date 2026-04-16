@@ -1,396 +1,287 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 
-const seatRows = [
-  {
-    seatId: "s1",
-    displayName: "Seat 1",
-    totalScore: 2_900,
-    roundsPlayed: 5,
-    correctDetections: 3,
-    timesFlagged: 1,
-    state: "Contribution locked",
-  },
-  {
-    seatId: "s2",
-    displayName: "Seat 2",
-    totalScore: 3_100,
-    roundsPlayed: 5,
-    correctDetections: 4,
-    timesFlagged: 0,
-    state: "Accusation pending",
-  },
-  {
-    seatId: "s3",
-    displayName: "Seat 3",
-    totalScore: 3_450,
-    roundsPlayed: 5,
-    correctDetections: 2,
-    timesFlagged: 2,
-    state: "Accusation pending",
-  },
-  {
-    seatId: "s4",
-    displayName: "Seat 4",
-    totalScore: 2_780,
-    roundsPlayed: 5,
-    correctDetections: 3,
-    timesFlagged: 1,
-    state: "Contribution locked",
-  },
-];
+import { vaultBrief, vaultModule } from "@arena/game-vault";
 
-const roundTrail = [
-  {
-    label: "Pool reveal",
-    value: "1,240 credits in vault / 620 back to every seat",
-  },
-  {
-    label: "Detection target",
-    value: "Lowest contribution has not been revealed yet",
-  },
-  {
-    label: "Viewer state",
-    value: "You contributed 180 and have not cast an accusation",
-  },
-];
+import { getRoomsSnapshot } from "../../../lib/service-data";
 
-const lastResolved = {
-  roundNumber: 5,
-  lowestSeatIds: ["Seat 3"],
-  correctAccusers: ["Seat 1", "Seat 2", "Seat 4"],
-  penalized: ["Seat 3"],
-};
+import {
+  buildVaultDemoState,
+  contentPlan,
+  findLiveVaultRoom,
+  getVaultStatus,
+  hiddenInfoRail,
+  interactionThesis,
+  premiseColumns,
+  publicInfoRail,
+  vaultSignals,
+  visualThesis,
+} from "./data";
+import styles from "./vault.module.css";
 
-const panelStyle: React.CSSProperties = {
-  border: "1px solid rgba(168, 203, 255, 0.16)",
-  background: "rgba(7, 15, 27, 0.86)",
-  borderRadius: 26,
-  boxShadow: "0 24px 80px rgba(0, 0, 0, 0.28)",
-  backdropFilter: "blur(14px)",
-};
+export const dynamic = "force-dynamic";
 
-export default function VaultGamePage() {
+export default async function VaultGamePage() {
+  const roomsSnapshot = await getRoomsSnapshot();
+  const liveVaultRoom = findLiveVaultRoom(roomsSnapshot.data);
+  const vaultStatus = getVaultStatus(liveVaultRoom);
+  const demoState = buildVaultDemoState();
+
   return (
-    <main
-      className="app-shell"
-      style={{
-        background:
-          "radial-gradient(circle at 15% 15%, rgba(255, 222, 145, 0.2), transparent 22%), radial-gradient(circle at 82% 18%, rgba(108, 242, 200, 0.12), transparent 20%), linear-gradient(180deg, #09111c 0%, #04080f 100%)",
-      }}
-    >
-      <div className="shell" style={{ display: "grid", gap: 24 }}>
-        <section
-          style={{
-            ...panelStyle,
-            overflow: "hidden",
-            position: "relative",
-            padding: "28px 28px 32px",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              inset: "auto -12% -30% 45%",
-              height: 260,
-              background:
-                "radial-gradient(circle, rgba(255, 211, 120, 0.22), transparent 62%)",
-              pointerEvents: "none",
-            }}
-          />
+    <main className={`app-shell ${styles.page}`}>
+      <div className={`shell ${styles.stack}`}>
+        <section className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <div>
+              <p className={styles.eyebrow}>Vault / Public-goods accusation game</p>
+              <h1 className={styles.headline}>The pool grows before the blame lands.</h1>
+            </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 1.1fr) minmax(320px, 0.95fr)",
-              gap: 28,
-              alignItems: "stretch",
-              position: "relative",
-              zIndex: 1,
-            }}
-          >
-            <div style={{ display: "grid", gap: 18, alignContent: "start" }}>
-              <div
-                style={{
-                  color: "var(--accent)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.16em",
-                  fontSize: "0.78rem",
-                }}
-              >
-                The Vault / Hidden human-or-LLM seats
+            <p className={styles.lede}>
+              {vaultBrief.summary} Each seat decides privately how much to keep, the room sees only
+              the pooled return, and then everyone has to name the weakest contributor without any
+              human-or-LLM badge to lean on. That makes Vault one of the cleanest ARENA games for
+              measuring generosity, suspicion, and consensus pressure at the same time.
+            </p>
+
+            <div className={styles.ctaRow}>
+              <Link className="button primary" href={vaultStatus.ctaHref}>
+                {vaultStatus.ctaLabel}
+              </Link>
+              <Link className="button" href="/lobby">
+                Open lobby
+              </Link>
+            </div>
+
+            <div className={styles.heroMeta}>
+              <div className={styles.metaCard}>
+                <span>Visual thesis</span>
+                <strong>{visualThesis}</strong>
               </div>
-              <div style={{ display: "grid", gap: 12 }}>
-                <h1
-                  style={{
-                    margin: 0,
-                    fontFamily: "var(--font-display), serif",
-                    fontSize: "clamp(2.8rem, 6vw, 5.2rem)",
-                    lineHeight: 0.96,
-                    letterSpacing: "-0.04em",
-                  }}
-                >
-                  Build the pool. Then decide who held back.
-                </h1>
-                <p
-                  style={{
-                    margin: 0,
-                    maxWidth: 560,
-                    color: "var(--muted)",
-                    lineHeight: 1.7,
-                    fontSize: "1.02rem",
-                  }}
-                >
-                  Each round starts with a private endowment. Everyone chooses
-                  how much to lock into the vault, the room sees only the pooled
-                  return, and then every seat has to accuse the weakest
-                  contributor without knowing who is human and who is model-backed.
-                </p>
+              <div className={styles.metaCard}>
+                <span>Public rule</span>
+                <strong>Pool totals are public. Live contribution amounts and seat type are not.</strong>
+              </div>
+              <div className={styles.metaCard}>
+                <span>Content plan</span>
+                <strong>{contentPlan[0]}</strong>
+              </div>
+              <div className={styles.metaCard}>
+                <span>Interaction thesis</span>
+                <strong>{interactionThesis[0]}</strong>
+              </div>
+            </div>
+          </div>
+
+          <aside className={styles.heroStage}>
+            <div className={styles.statusCard}>
+              <span className={styles.panelLabel}>Live room status</span>
+              <strong>{vaultStatus.label}</strong>
+              <p className={styles.statusCallout}>{vaultStatus.detail}</p>
+            </div>
+
+            <div className={styles.chamberCard}>
+              <div className={styles.chamberHero}>
+                <div>
+                  <div className={styles.chamberLabel}>Sample chamber</div>
+                  <div className={styles.chamberValue}>
+                    Round {demoState.publicState.roundNumber} / {demoState.publicState.totalRounds}
+                  </div>
+                </div>
+                <div>
+                  <div className={styles.chamberLabel}>Phase</div>
+                  <div className={styles.chamberValue}>
+                    {demoState.publicState.phase.replace("_", " ")}
+                  </div>
+                </div>
               </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                <Link className="button primary" href="/lobby">
-                  Back to lobby
-                </Link>
-                <a className="button" href="#vault-sample">
-                  Inspect sample room state
-                </a>
+              <div className={styles.meter}>
+                <div className={styles.meterRow}>
+                  <span>Contribution status</span>
+                  <span>
+                    {demoState.publicState.contributionStatus.submitted} /{" "}
+                    {demoState.publicState.contributionStatus.total} locked
+                  </span>
+                </div>
+                <div className={styles.meterTrack}>
+                  <div className={styles.meterFill} />
+                </div>
+                <div className={styles.meterValue}>
+                  {demoState.publicState.vaultTotal} credits in vault
+                </div>
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                  gap: 12,
-                }}
-              >
-                {[
-                  { label: "Seats", value: "4-6" },
-                  { label: "Rounds", value: "8" },
-                  { label: "Reveal rule", value: "Pool totals first" },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    style={{
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                      borderRadius: 18,
-                      padding: "14px 16px",
-                      background: "rgba(255, 255, 255, 0.03)",
-                    }}
+              <div className={styles.seatRail}>
+                {demoState.seatRows.map((seat) => (
+                  <article
+                    className={styles.seatRow}
+                    key={seat.seatId}
+                    style={{ "--seat-accent": seat.accent } as CSSProperties}
                   >
-                    <div style={{ color: "var(--muted)", fontSize: "0.82rem" }}>
-                      {stat.label}
+                    <div className={styles.seatMask}>{seat.displayName.replace("Mask ", "M")}</div>
+                    <div>
+                      <div className={styles.seatHeader}>
+                        <strong>{seat.displayName}</strong>
+                        <span className={styles.seatBadge}>{seat.state}</span>
+                      </div>
+                      <div className={styles.seatState}>
+                        {seat.correctDetections} correct reads / {seat.timesFlagged} flags /{" "}
+                        {seat.roundsPlayed} rounds logged
+                      </div>
                     </div>
-                    <div style={{ marginTop: 6, fontSize: "1.05rem" }}>{stat.value}</div>
+                    <div className={styles.seatScore}>
+                      <strong>{seat.totalScore} pts</strong>
+                      <span>identity remains blinded</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div className={styles.chamberRail}>
+                {demoState.chamberRail.map((entry) => (
+                  <div className={styles.chamberEntry} key={entry.label}>
+                    <span className={styles.panelLabel}>{entry.label}</span>
+                    <strong>{entry.value}</strong>
                   </div>
                 ))}
               </div>
             </div>
+          </aside>
+        </section>
 
-            <aside
-              id="vault-sample"
-              style={{
-                ...panelStyle,
-                padding: 22,
-                display: "grid",
-                gap: 16,
-                background:
-                  "linear-gradient(180deg, rgba(13, 26, 43, 0.94), rgba(6, 12, 22, 0.94))",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  alignItems: "flex-start",
-                }}
-              >
-                <div>
-                  <div className="poster-label">Sample Live Room</div>
-                  <div className="poster-value">Round 6 / accusation window</div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div className="poster-label">Vault Return</div>
-                  <div className="poster-value">620 per seat</div>
-                </div>
-              </div>
+        <section className={styles.signalGrid}>
+          {vaultSignals.map((signal) => (
+            <article className={styles.signalCard} key={signal.label}>
+              <span>{signal.label}</span>
+              <strong>{signal.value}</strong>
+              <p>{signal.detail}</p>
+            </article>
+          ))}
+        </section>
 
-              <div
-                style={{
-                  borderRadius: 22,
-                  padding: 18,
-                  border: "1px solid rgba(255, 211, 120, 0.22)",
-                  background:
-                    "linear-gradient(135deg, rgba(255, 211, 120, 0.14), rgba(82, 213, 255, 0.08))",
-                  display: "grid",
-                  gap: 10,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 16,
-                    color: "var(--muted)",
-                    fontSize: "0.88rem",
-                  }}
-                >
-                  <span>Contribution status</span>
-                  <span>4 / 4 locked</span>
-                </div>
-                <div
-                  style={{
-                    height: 10,
-                    borderRadius: 999,
-                    background: "rgba(255, 255, 255, 0.06)",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      background:
-                        "linear-gradient(90deg, rgba(255, 211, 120, 0.85), rgba(108, 242, 200, 0.85))",
-                    }}
-                  />
-                </div>
-                <div style={{ fontSize: "1.7rem", fontWeight: 700 }}>1,240 credits in vault</div>
-              </div>
+        <section className={styles.supportSection}>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionKicker}>Why this game works</span>
+            <h2>Vault makes hidden-seat cooperation legible without flattening the tension.</h2>
+            <p className={styles.sectionCopy}>
+              The room only needs a few public facts to understand the pressure: how much cash each
+              seat receives per round, how large the pool became, and who the table believes held
+              back. That keeps the game watchable while preserving the private signal that actually
+              matters for benchmarking.
+            </p>
+          </div>
 
-              <div style={{ display: "grid", gap: 10 }}>
-                {seatRows.map((seat) => (
-                  <div
-                    key={seat.seatId}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "minmax(0, 1fr) auto",
-                      gap: 14,
-                      alignItems: "center",
-                      padding: "14px 16px",
-                      borderRadius: 18,
-                      border: "1px solid rgba(168, 203, 255, 0.1)",
-                      background: "rgba(255, 255, 255, 0.025)",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{seat.displayName}</div>
-                      <div
-                        style={{
-                          color: "var(--muted)",
-                          fontSize: "0.9rem",
-                          marginTop: 4,
-                        }}
-                      >
-                        {seat.state}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right", minWidth: 128 }}>
-                      <div style={{ fontSize: "1.02rem" }}>{seat.totalScore} pts</div>
-                      <div style={{ color: "var(--muted)", fontSize: "0.82rem", marginTop: 4 }}>
-                        {seat.correctDetections} correct / {seat.timesFlagged} flagged
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: "grid", gap: 10 }}>
-                {roundTrail.map((item) => (
-                  <div
-                    key={item.label}
-                    style={{
-                      display: "grid",
-                      gap: 4,
-                      paddingBottom: 10,
-                      borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
-                    }}
-                  >
-                    <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>{item.label}</div>
-                    <div>{item.value}</div>
-                  </div>
-                ))}
-              </div>
-            </aside>
+          <div className={styles.premiseGrid}>
+            {premiseColumns.map((column) => (
+              <article className={styles.premiseColumn} key={column.title}>
+                <h3>{column.title}</h3>
+                <p>{column.body}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-            gap: 20,
-          }}
-        >
-          <article style={{ ...panelStyle, padding: 24, display: "grid", gap: 16 }}>
-            <div className="poster-label">Round Structure</div>
-            <div style={{ display: "grid", gap: 12 }}>
-              {[
-                "Every seat starts each round with 500 credits and submits a private contribution from 0 to 500.",
-                "The vault doubles the pooled amount and redistributes it equally across all seats.",
-                "Only after the pool reveal does the room accuse the weakest contributor.",
-                "Correct accusations earn a bonus, and correctly flagged free-riders take a penalty.",
-              ].map((line, index) => (
-                <div
-                  key={line}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "24px minmax(0, 1fr)",
-                    gap: 12,
-                    alignItems: "start",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: "50%",
-                      background: "rgba(255, 211, 120, 0.18)",
-                      display: "grid",
-                      placeItems: "center",
-                      fontSize: "0.8rem",
-                    }}
-                  >
-                    {index + 1}
-                  </div>
-                  <div style={{ color: "var(--muted)", lineHeight: 1.7 }}>{line}</div>
-                </div>
-              ))}
-            </div>
-          </article>
+        <section className={styles.detailSection}>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionKicker}>Round logic</span>
+            <h2>Two windows per round: private contribution, then public accusation.</h2>
+            <p className={styles.sectionCopy}>
+              Vault runs on an eight-round cycle with {vaultBrief.playerCountLabel} and a{" "}
+              {Math.floor(vaultModule.timers.actionMs / 1000)} second action clock. The accusation
+              window matters because it converts private generosity into public suspicion without
+              ever exposing who is human or model-backed.
+            </p>
+          </div>
 
-          <article style={{ ...panelStyle, padding: 24, display: "grid", gap: 16 }}>
-            <div className="poster-label">Latest Resolved Round</div>
-            <div style={{ display: "grid", gap: 12 }}>
-              <div style={{ fontSize: "1.25rem", fontWeight: 700 }}>
-                Round {lastResolved.roundNumber}
-              </div>
-              <div style={{ color: "var(--muted)", lineHeight: 1.7 }}>
-                The room previously converged on {lastResolved.lowestSeatIds.join(", ")} as the
-                weakest contributor. The correct accusers were {lastResolved.correctAccusers.join(", ")}.
-              </div>
-              <div
-                style={{
-                  borderRadius: 18,
-                  padding: "14px 16px",
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(168, 203, 255, 0.08)",
-                }}
-              >
-                <div style={{ color: "var(--muted)", fontSize: "0.84rem" }}>Penalty applied</div>
-                <div style={{ marginTop: 6 }}>{lastResolved.penalized.join(", ")}</div>
-              </div>
-              <div
-                style={{
-                  color: "var(--muted)",
-                  lineHeight: 1.7,
-                }}
-              >
-                The public page stays blind to seat backing type. The point of
-                the room is reading contribution behavior, not reading a model badge.
-              </div>
+          <div className={styles.detailGrid}>
+            <article className={styles.controlCard}>
+              <span>Round structure</span>
+              <strong>What every seat is actually deciding</strong>
+              <ol>
+                <li>
+                  <strong>Lock a contribution</strong>: choose a private amount from 0 to 500.
+                </li>
+                <li>
+                  <strong>Watch the pool reveal</strong>: the room learns the total, multiplier,
+                  and equal return per seat.
+                </li>
+                <li>
+                  <strong>Name the weak link</strong>: accuse one seat without any species label.
+                </li>
+                <li>
+                  <strong>Read the resolution</strong>: bonuses, penalties, and vote consensus hit
+                  the public board immediately.
+                </li>
+              </ol>
+            </article>
+
+            <article className={styles.railCard}>
+              <span>Publicly visible</span>
+              <ul>
+                {publicInfoRail.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className={styles.railCard}>
+              <span>Still hidden</span>
+              <ul>
+                {hiddenInfoRail.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        {demoState.latestRoundCopy ? (
+          <section className={styles.supportSection}>
+            <div className={styles.sectionHead}>
+              <span className={styles.sectionKicker}>Latest resolution</span>
+              <h2>Round {demoState.latestRoundCopy.roundNumber} closed with a public consensus trail.</h2>
             </div>
-          </article>
+
+            <div className={styles.supportPanel}>
+              <p className={styles.latestRoundCopy}>
+                Lowest contribution: {demoState.latestRoundCopy.lowestSeatIds.join(", ")}. Correct
+                accusers: {demoState.latestRoundCopy.correctAccusers.join(", ")}. Penalized seats:{" "}
+                {demoState.latestRoundCopy.penalized.join(", ")}.
+              </p>
+            </div>
+          </section>
+        ) : null}
+
+        <section className={styles.finalSection}>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionKicker}>Flagship CTA</span>
+            <h2>Enter a live treasury room when one exists. Otherwise brief from here and queue from the lobby.</h2>
+            <p className={styles.sectionCopy}>
+              Rooms source: {roomsSnapshot.source}. Current live room:{" "}
+              {liveVaultRoom ? liveVaultRoom.roomId.slice(0, 12) : "not detected yet"}. The page
+              already mirrors the real rules, so once runtime wiring reaches Vault the briefing and
+              live routes will line up cleanly.
+            </p>
+          </div>
+
+          <div className={styles.finalBody}>
+            <div className={styles.proofLine}>
+              <span>Game priority</span>
+              <strong>{vaultBrief.priority.toUpperCase()}</strong>
+              <span>Visual direction</span>
+              <strong>{vaultBrief.visualDirection}</strong>
+            </div>
+
+            <div className={styles.ctaRow}>
+              <Link className="button primary" href={vaultStatus.ctaHref}>
+                {vaultStatus.ctaLabel}
+              </Link>
+              <Link className="button" href="/results">
+                Open result shells
+              </Link>
+            </div>
+          </div>
         </section>
       </div>
     </main>

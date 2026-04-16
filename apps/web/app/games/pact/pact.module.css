@@ -1,0 +1,631 @@
+.page {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(74, 160, 255, 0.18), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(255, 120, 120, 0.12), transparent 24%),
+    linear-gradient(180deg, #07121f 0%, #050a12 44%, #091827 100%);
+}
+
+.page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 100% 72px, 72px 100%;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+}
+
+.stack {
+  display: grid;
+  gap: 28px;
+  padding-block: 32px 64px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.heroCopy,
+.heroStage,
+.signalCard,
+.storyCard,
+.railCard,
+.timeline,
+.spotlightCard,
+.finalSection {
+  border: 1px solid rgba(162, 205, 255, 0.14);
+  background: linear-gradient(180deg, rgba(7, 17, 29, 0.88), rgba(4, 10, 18, 0.94));
+  box-shadow: 0 28px 100px rgba(0, 0, 0, 0.28);
+}
+
+.heroCopy {
+  border-radius: 36px;
+  padding: 28px;
+  display: grid;
+  gap: 28px;
+}
+
+.heroStage {
+  border-radius: 32px;
+  padding: 22px;
+  display: grid;
+  gap: 18px;
+  background:
+    radial-gradient(circle at top, rgba(94, 149, 255, 0.18), transparent 40%),
+    linear-gradient(180deg, rgba(7, 17, 29, 0.95), rgba(4, 10, 18, 0.98));
+}
+
+.eyebrow,
+.sectionKicker,
+.badge {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+}
+
+.eyebrow,
+.sectionKicker {
+  color: rgba(192, 219, 255, 0.72);
+}
+
+.headline {
+  margin: 10px 0 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(3rem, 7vw, 6.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+  max-width: 12ch;
+}
+
+.lede {
+  max-width: 55rem;
+  margin: 0;
+  color: rgba(224, 236, 255, 0.82);
+  font-size: 1.03rem;
+  line-height: 1.72;
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.metaGrid,
+.signalGrid,
+.scoreGrid,
+.scenarioGrid,
+.detailGrid,
+.spotlightGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.metaGrid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.metaCard,
+.signalCard {
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.metaCard span,
+.signalCard span,
+.statusCard span,
+.seatCard span,
+.timelineHeader span,
+.storyHeader span {
+  display: block;
+  color: rgba(188, 212, 246, 0.72);
+}
+
+.metaCard strong,
+.signalCard strong,
+.statusCard strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.1rem;
+  line-height: 1.35;
+}
+
+.statusCard {
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(162, 205, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.statusCallout {
+  margin: 10px 0 0;
+  color: rgba(224, 236, 255, 0.76);
+  line-height: 1.6;
+}
+
+.scoreGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.seatCard {
+  border-radius: 24px;
+  border: 1px solid rgba(162, 205, 255, 0.14);
+  padding: 16px;
+  background:
+    linear-gradient(135deg, rgba(91, 153, 255, 0.18), transparent 55%),
+    rgba(255, 255, 255, 0.03);
+}
+
+.seatMask {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(162, 205, 255, 0.16);
+  margin-bottom: 14px;
+}
+
+.seatCard strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.seatMeta {
+  margin-top: 6px;
+  color: rgba(214, 228, 250, 0.76);
+}
+
+.seatScore {
+  margin-top: 10px;
+  font-size: 1.7rem;
+}
+
+.sectionHead {
+  display: grid;
+  gap: 10px;
+  max-width: 52rem;
+}
+
+.sectionHead h2 {
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.sectionCopy {
+  margin: 0;
+  color: rgba(224, 236, 255, 0.78);
+  line-height: 1.7;
+}
+
+.signalGrid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.signalCard p,
+.storyCard p,
+.railCard li,
+.timelineNote,
+.spotlightCard p,
+.proofLine span {
+  color: rgba(224, 236, 255, 0.74);
+  line-height: 1.62;
+}
+
+.storySection,
+.detailSection,
+.strategySection,
+.simulatorSection {
+  display: grid;
+  gap: 20px;
+}
+
+.simulatorGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.85fr);
+  gap: 20px;
+}
+
+.simulatorStage,
+.controlPanel,
+.summaryCard,
+.ledgerRow {
+  border: 1px solid rgba(162, 205, 255, 0.14);
+  background: linear-gradient(180deg, rgba(7, 17, 29, 0.88), rgba(4, 10, 18, 0.94));
+  box-shadow: 0 28px 100px rgba(0, 0, 0, 0.28);
+}
+
+.simulatorStage {
+  border-radius: 30px;
+  padding: 22px;
+  display: grid;
+  gap: 18px;
+  background:
+    radial-gradient(circle at 15% 12%, rgba(94, 149, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(7, 17, 29, 0.95), rgba(4, 10, 18, 0.98));
+}
+
+.simulatorTopline,
+.simulatorSeats {
+  display: grid;
+  gap: 12px;
+}
+
+.simulatorTopline {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.simulatorTopline div,
+.revealCard,
+.ledgerEmpty,
+.payoffRow,
+.pendingSummary {
+  border-radius: 18px;
+  border: 1px solid rgba(162, 205, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.simulatorTopline div {
+  padding: 14px 16px;
+}
+
+.simulatorTopline span,
+.simulatorSeatCard span,
+.controlHeader span,
+.summaryCard span {
+  display: block;
+  color: rgba(188, 212, 246, 0.72);
+}
+
+.simulatorTopline strong,
+.simulatorSeatCard strong,
+.controlHeader strong,
+.summaryCard strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.1rem;
+}
+
+.simulatorSeats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.simulatorSeatCard {
+  border-radius: 24px;
+  padding: 18px;
+  border: 1px solid rgba(162, 205, 255, 0.14);
+  background:
+    linear-gradient(135deg, rgba(91, 153, 255, 0.18), transparent 55%),
+    rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 12px;
+}
+
+.simulatorSeatCard p,
+.payoffRow p,
+.summaryCard p,
+.revealCard p,
+.ledgerRow p,
+.profileButton span,
+.profileButtonActive span,
+.pendingSummary {
+  color: rgba(224, 236, 255, 0.74);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.choiceRail,
+.profileList,
+.summaryList,
+.payoffTable {
+  display: grid;
+  gap: 10px;
+}
+
+.choiceRail {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.simulatorNote {
+  min-height: 26px;
+}
+
+.agentStatus {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.agentStatus strong {
+  margin: 0 0 4px;
+}
+
+.agentPulse {
+  width: 12px;
+  height: 12px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: #7dcbff;
+  box-shadow: 0 0 0 0 rgba(125, 203, 255, 0.4);
+  animation: pactPulse 1.6s ease-out infinite;
+}
+
+.revealCard {
+  padding: 16px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.roundLedger {
+  display: grid;
+  gap: 10px;
+}
+
+.ledgerRow {
+  border-radius: 20px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 120px;
+  gap: 12px;
+  align-items: center;
+}
+
+.ledgerRow strong {
+  display: block;
+  margin-top: 6px;
+}
+
+.ledgerEmpty,
+.pendingSummary {
+  padding: 16px 18px;
+}
+
+.simulatorSidebar {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.controlPanel {
+  border-radius: 28px;
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.profileButton,
+.profileButtonActive {
+  border-radius: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(162, 205, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+
+.profileButtonActive {
+  background:
+    linear-gradient(135deg, rgba(91, 153, 255, 0.18), transparent 55%),
+    rgba(255, 255, 255, 0.05);
+  border-color: rgba(132, 188, 255, 0.3);
+}
+
+.payoffTable,
+.summaryList {
+  gap: 12px;
+}
+
+.payoffRow,
+.summaryCard {
+  border-radius: 20px;
+  padding: 14px 16px;
+}
+
+.payoffRow strong {
+  display: block;
+  margin: 8px 0 6px;
+}
+
+@keyframes pactPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(125, 203, 255, 0.4);
+  }
+
+  80% {
+    box-shadow: 0 0 0 12px rgba(125, 203, 255, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(125, 203, 255, 0);
+  }
+}
+
+.scenarioGrid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.storyCard {
+  border-radius: 28px;
+  padding: 20px;
+  display: grid;
+  gap: 18px;
+}
+
+.storyHeader {
+  display: grid;
+  gap: 8px;
+}
+
+.storyHeader strong {
+  font-size: 1.35rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(218, 233, 255, 0.9);
+}
+
+.roundStrip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roundPill {
+  border-radius: 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(162, 205, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.roundPill strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.roundPill span {
+  display: block;
+  margin-top: 6px;
+  color: rgba(214, 228, 250, 0.72);
+}
+
+.detailGrid {
+  grid-template-columns: minmax(0, 1.1fr) repeat(2, minmax(260px, 0.8fr));
+}
+
+.timeline,
+.railCard,
+.spotlightCard {
+  border-radius: 28px;
+  padding: 22px;
+}
+
+.timeline {
+  display: grid;
+  gap: 18px;
+}
+
+.timelineHeader strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.2rem;
+}
+
+.timeline ol {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.timeline li strong {
+  font-size: 0.95rem;
+}
+
+.railCard ul {
+  margin: 14px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.spotlightGrid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.spotlightCard strong {
+  display: block;
+  margin: 8px 0 10px;
+  font-size: 1.25rem;
+}
+
+.metricRail {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(162, 205, 255, 0.12);
+}
+
+.metric span:last-child {
+  color: rgba(240, 247, 255, 0.92);
+}
+
+.finalSection {
+  border-radius: 32px;
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+
+.proofLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+}
+
+.proofLine strong {
+  color: rgba(242, 247, 255, 0.95);
+}
+
+@media (max-width: 1024px) {
+  .hero,
+  .detailGrid,
+  .simulatorGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .stack {
+    padding-block: 20px 40px;
+  }
+
+  .heroCopy,
+  .heroStage,
+  .storyCard,
+  .timeline,
+  .railCard,
+  .spotlightCard,
+  .finalSection {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .scoreGrid,
+  .roundStrip,
+  .choiceRail,
+  .simulatorSeats,
+  .simulatorTopline,
+  .ledgerRow {
+    grid-template-columns: 1fr;
+  }
+
+  .headline {
+    max-width: 9ch;
+  }
+}

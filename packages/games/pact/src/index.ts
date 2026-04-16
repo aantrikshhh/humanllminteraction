@@ -2,8 +2,11 @@ import type {
   PactAction,
   PactActionEnvelope,
   PactBrief,
+  PactChoice,
   PactGameModule,
   PactMatchResult,
+  PactOutcomeCode,
+  PactPhase,
   PactPrivateState,
   PactPublicRoomState,
   PactPublicState,
@@ -15,6 +18,7 @@ import type {
 import { PACT_TOTAL_ROUNDS } from "./types";
 
 import {
+  PACT_PAYOFF_MATRIX,
   applyPactAction,
   createPactState,
   finalizePactMatch,
@@ -57,6 +61,7 @@ export const pactModule: PactGameModule = {
 
 export {
   PACT_TOTAL_ROUNDS,
+  PACT_PAYOFF_MATRIX,
   applyPactAction,
   createPactState,
   finalizePactMatch,
@@ -68,8 +73,11 @@ export type {
   PactAction,
   PactActionEnvelope,
   PactBrief,
+  PactChoice,
   PactGameModule,
   PactMatchResult,
+  PactOutcomeCode,
+  PactPhase,
   PactPrivateState,
   PactPublicRoomState,
   PactPublicState,

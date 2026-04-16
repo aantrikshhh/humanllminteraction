@@ -9,3 +9,9 @@ Original prompt: build a deterministic multiplayer-ready 'Settlement' MVP slice 
 - Remaining for integration:
   - room/runtime wiring must mount this module and optionally auto-fill LLM seats
   - live room UI still needs transport and action submission plumbing from the main thread
+
+2026-04-16 update:
+
+- kept the core rules package shape and doubled down on `Settlement Lite` instead of forcing premature spatial systems
+- replaced the static route with a local command-board demo where one seat is player-controlled and the other seats auto-advance deterministically
+- added regression coverage for hidden commit visibility, invalid phase/action checks, and deterministic terminal coercion from partial matches

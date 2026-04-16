@@ -6,11 +6,13 @@ import type {
   SettlementPrivateState,
   SettlementPublicRoomState,
   SettlementPublicState,
+  SettlementStance,
 } from "./types";
 
 import {
   SETTLEMENT_MAX_CONTRIBUTION,
   SETTLEMENT_STARTING_SUPPLIES,
+  SETTLEMENT_STANCES,
   SETTLEMENT_TOTAL_ROUNDS,
   createSettlementRounds,
 } from "./types";
@@ -65,6 +67,7 @@ export const settlementModule: SettlementGameModule = {
 export {
   SETTLEMENT_MAX_CONTRIBUTION,
   SETTLEMENT_STARTING_SUPPLIES,
+  SETTLEMENT_STANCES,
   SETTLEMENT_TOTAL_ROUNDS,
   applySettlementAction,
   coerceSettlementToTerminal,
@@ -88,4 +91,5 @@ export type {
   SettlementPrivateState,
   SettlementPublicRoomState,
   SettlementPublicState,
+  SettlementStance,
 };

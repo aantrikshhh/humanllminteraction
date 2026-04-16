@@ -7,6 +7,6 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "tsx ../../../tests/simulations/settlement-smoke.ts"
+    "test": "tsx ../../../tests/simulations/settlement-smoke.ts && tsx ../../../tests/simulations/settlement-regression.ts"
   }
 }

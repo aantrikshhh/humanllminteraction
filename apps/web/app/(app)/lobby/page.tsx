@@ -36,12 +36,12 @@ export default async function LobbyPage() {
 
         <section className="hero-band">
           <div className="stack">
-            <div className="eyebrow">Operator Lobby</div>
-            <h1 className="section-title">Live rooms, blinded seats, and demo payout flow.</h1>
+            <div className="eyebrow">Live Lobby</div>
+            <h1 className="section-title">Live rooms, blinded seats, and a clean demo path.</h1>
             <p className="muted section-copy">
-              The lobby reads from the room runtime, leaderboard API, and payments stub when they
-              are running locally. If any service is down, the shell falls back to seeded demo data
-              so the product remains usable during integration.
+              Start with Auction for the strongest 2-minute story, then move from room play into
+              results, leaderboard impact, and payout follow-through without ever revealing which
+              occupied seats are human or model-backed.
             </p>
           </div>
 
@@ -68,7 +68,7 @@ export default async function LobbyPage() {
                 <div>
                   <h2>Room controls</h2>
                   <p className="muted">
-                    Create or advance a room here, then move laterally into the live room shell or
+                    Create a room here, claim a mask, and move directly into the live room shell or
                     public result surface.
                   </p>
                 </div>
@@ -89,7 +89,7 @@ export default async function LobbyPage() {
             <div className="stack">
               <div className="panel">
                 <div className="section-row">
-                  <h2>Operator rail</h2>
+                  <h2>Demo rail</h2>
                   <span className="pill subtle">Fast path</span>
                 </div>
                 <div className="compact-list">

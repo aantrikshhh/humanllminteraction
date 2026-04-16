@@ -1,0 +1,491 @@
+.page {
+  background:
+    radial-gradient(circle at top, rgba(244, 178, 89, 0.22), transparent 24rem),
+    linear-gradient(180deg, #07111b 0%, #0c1824 38%, #101d2b 100%);
+  color: #eef1ea;
+}
+
+.stack {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 0.95fr);
+  min-height: calc(100svh - 8rem);
+  padding: 2rem 0 1rem;
+  align-items: stretch;
+}
+
+.heroCopy {
+  display: grid;
+  align-content: center;
+  gap: 1.25rem;
+  max-width: 42rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(235, 241, 234, 0.7);
+}
+
+.headline {
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(3.2rem, 7vw, 6rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+  text-wrap: balance;
+}
+
+.lede {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 1.02rem;
+  line-height: 1.8;
+  color: rgba(235, 241, 234, 0.78);
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.heroMeta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.heroMeta div,
+.signalStrip article,
+.commandDeck,
+.seatLedger,
+.historyPanel,
+.logPanel {
+  border: 1px solid rgba(244, 178, 89, 0.18);
+  background: rgba(8, 15, 24, 0.74);
+  backdrop-filter: blur(22px);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.28);
+}
+
+.heroMeta div {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+}
+
+.heroMeta span,
+.signalStrip span,
+.sectionHead span,
+.advisor span,
+.privateHint span,
+.historyRow span,
+.logRow span,
+.stageHeader span {
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(235, 241, 234, 0.56);
+}
+
+.heroMeta strong {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.mapStage {
+  position: relative;
+  overflow: hidden;
+  min-height: 37rem;
+  padding: 1.25rem;
+  border-radius: 2rem;
+  border: 1px solid rgba(244, 178, 89, 0.16);
+  background:
+    linear-gradient(180deg, rgba(7, 15, 23, 0.96), rgba(12, 24, 38, 0.92)),
+    radial-gradient(circle at center, rgba(244, 178, 89, 0.08), transparent 55%);
+}
+
+.mapGlow {
+  position: absolute;
+  inset: 14% 12%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(244, 178, 89, 0.16), transparent 56%),
+    radial-gradient(circle at top, rgba(114, 196, 179, 0.14), transparent 38%);
+  filter: blur(20px);
+}
+
+.stageHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stageHeader strong {
+  font-size: 1rem;
+}
+
+.district {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 3.6rem 1fr;
+  gap: 0.9rem;
+  width: min(16rem, 42vw);
+  padding: 1rem;
+  border-radius: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--district-accent) 36%, transparent);
+  background:
+    linear-gradient(180deg, rgba(15, 27, 38, 0.92), rgba(8, 14, 22, 0.86));
+}
+
+.district:nth-of-type(1) {
+  top: 5rem;
+  left: 6%;
+}
+
+.district:nth-of-type(2) {
+  top: 22%;
+  right: 8%;
+}
+
+.district:nth-of-type(3) {
+  bottom: 18%;
+  left: 18%;
+}
+
+.district:nth-of-type(4) {
+  right: 14%;
+  bottom: 9%;
+}
+
+.district[data-current="true"] {
+  transform: translateY(-0.3rem);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--district-accent) 55%, transparent),
+    0 1.4rem 2.4rem rgba(0, 0, 0, 0.3);
+}
+
+.district[data-winner="true"] {
+  border-color: rgba(244, 178, 89, 0.62);
+}
+
+.districtCrest {
+  display: grid;
+  place-items: center;
+  width: 3.6rem;
+  aspect-ratio: 1;
+  border-radius: 1.15rem;
+  background: color-mix(in srgb, var(--district-accent) 36%, rgba(10, 18, 25, 0.74));
+  color: #091019;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.district strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
+}
+
+.district p,
+.district span,
+.sectionCopy,
+.advisor p,
+.hiddenRail p,
+.seatHeader p,
+.placeholder {
+  margin: 0;
+  color: rgba(235, 241, 234, 0.72);
+  line-height: 1.6;
+}
+
+.district p {
+  font-size: 0.9rem;
+}
+
+.district span {
+  font-size: 0.8rem;
+}
+
+.signalStrip {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.signalStrip article {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1.25rem;
+}
+
+.signalStrip strong {
+  font-size: 1.2rem;
+}
+
+.mainGrid,
+.detailGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+}
+
+.commandDeck,
+.seatLedger,
+.historyPanel,
+.logPanel {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.35rem;
+  border-radius: 1.75rem;
+}
+
+.sectionHead {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.sectionHead h2 {
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.6rem, 2.8vw, 2.5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.sectionCopy {
+  font-size: 0.97rem;
+}
+
+.progressRail {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.progressCopy {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.progressCopy span {
+  color: rgba(235, 241, 234, 0.66);
+}
+
+.progressTrack {
+  overflow: hidden;
+  height: 0.9rem;
+  border-radius: 999px;
+  background: rgba(235, 241, 234, 0.08);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #72c4b3, #f4b259 78%);
+}
+
+.actionForm {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.field span {
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(235, 241, 234, 0.64);
+}
+
+.field input {
+  width: 100%;
+  accent-color: #f4b259;
+}
+
+.field strong,
+.advisor strong,
+.privateHint strong,
+.historyRow strong,
+.logRow strong,
+.outcomeBlock strong,
+.seatStats dd {
+  font-size: 1rem;
+}
+
+.stanceGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.stanceButton {
+  padding: 0.7rem 1rem;
+  border: 1px solid rgba(235, 241, 234, 0.14);
+  border-radius: 999px;
+  background: rgba(235, 241, 234, 0.04);
+  color: inherit;
+  text-transform: capitalize;
+}
+
+.stanceButton[data-active="true"] {
+  border-color: rgba(244, 178, 89, 0.5);
+  background: rgba(244, 178, 89, 0.14);
+}
+
+.privateHint,
+.advisor,
+.outcomeBlock,
+.hiddenRail {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: rgba(235, 241, 234, 0.04);
+}
+
+.seatList,
+.historyList,
+.logList {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.seatRow,
+.historyRow,
+.logRow {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 1.3rem;
+  background: rgba(235, 241, 234, 0.04);
+}
+
+.seatRow {
+  border-left: 0.28rem solid var(--seat-accent);
+}
+
+.seatHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.seatHeader span {
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(235, 241, 234, 0.06);
+  font-size: 0.78rem;
+  text-transform: capitalize;
+}
+
+.seatStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.seatStats div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.seatStats dt {
+  font-size: 0.76rem;
+  color: rgba(235, 241, 234, 0.58);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.seatStats dd {
+  margin: 0;
+}
+
+.historyRow,
+.logRow {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+}
+
+.historyRow[data-success="true"] {
+  background: rgba(114, 196, 179, 0.08);
+}
+
+.logRow {
+  grid-template-columns: 8.5rem 1fr;
+}
+
+.logRow span {
+  color: rgba(244, 178, 89, 0.72);
+}
+
+.placeholder {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(235, 241, 234, 0.04);
+}
+
+@media (max-width: 1080px) {
+  .hero,
+  .mainGrid,
+  .detailGrid,
+  .signalStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .mapStage {
+    min-height: 32rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero {
+    min-height: auto;
+    padding-top: 1rem;
+  }
+
+  .headline {
+    font-size: clamp(2.5rem, 14vw, 4rem);
+  }
+
+  .mapStage {
+    min-height: 36rem;
+  }
+
+  .district {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    margin-top: 0.85rem;
+  }
+
+  .seatStats,
+  .historyRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .logRow {
+    grid-template-columns: 1fr;
+  }
+}

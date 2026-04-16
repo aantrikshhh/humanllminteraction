@@ -1,0 +1,422 @@
+.page {
+  background:
+    radial-gradient(circle at 14% 12%, rgba(255, 212, 120, 0.2), transparent 24%),
+    radial-gradient(circle at 82% 16%, rgba(110, 236, 210, 0.14), transparent 20%),
+    linear-gradient(180deg, #09111a 0%, #05080f 100%);
+}
+
+.stack {
+  display: grid;
+  gap: 28px;
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.92fr);
+  gap: 28px;
+  padding: 34px;
+  border-radius: 34px;
+  border: 1px solid rgba(169, 204, 255, 0.14);
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(8, 16, 28, 0.94), rgba(4, 8, 16, 0.92)),
+    radial-gradient(circle at 18% 18%, rgba(255, 214, 122, 0.16), transparent 24%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -10% -30% 48%;
+  height: 320px;
+  background: radial-gradient(circle, rgba(255, 214, 122, 0.22), transparent 62%);
+  pointer-events: none;
+}
+
+.heroCopy,
+.heroStage {
+  position: relative;
+  z-index: 1;
+}
+
+.heroCopy {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+}
+
+.eyebrow,
+.sectionKicker,
+.panelLabel,
+.seatBadge,
+.chamberLabel {
+  color: var(--accent);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.headline {
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2.9rem, 6.4vw, 5.6rem);
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  max-width: 12ch;
+}
+
+.lede {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.75;
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.heroMeta,
+.signalGrid,
+.premiseGrid,
+.detailGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.heroMeta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metaCard,
+.signalCard,
+.premiseColumn,
+.controlCard,
+.railCard,
+.finalBody {
+  border-radius: 22px;
+  border: 1px solid rgba(169, 204, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.metaCard {
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.metaCard span,
+.signalCard span,
+.controlCard span,
+.railCard span,
+.proofLine span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.metaCard strong {
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.heroStage {
+  display: grid;
+  gap: 16px;
+}
+
+.statusCard,
+.chamberCard {
+  border-radius: 26px;
+  padding: 22px;
+  border: 1px solid rgba(169, 204, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(12, 24, 40, 0.94), rgba(7, 12, 22, 0.94));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+}
+
+.statusCard {
+  display: grid;
+  gap: 8px;
+}
+
+.statusCard strong,
+.chamberHero strong,
+.seatHeader strong,
+.seatScore strong,
+.signalCard strong,
+.proofLine strong {
+  font-size: 1.05rem;
+}
+
+.statusCallout,
+.signalCard p,
+.premiseColumn p,
+.controlCard ol,
+.railCard ul,
+.sectionCopy,
+.latestRoundCopy,
+.supportCopy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.chamberCard {
+  display: grid;
+  gap: 18px;
+}
+
+.chamberHero {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.chamberValue {
+  font-size: 1.8rem;
+  line-height: 1;
+  margin-top: 8px;
+}
+
+.meter {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 214, 122, 0.24);
+  background: linear-gradient(135deg, rgba(255, 214, 122, 0.16), rgba(82, 213, 255, 0.08));
+}
+
+.meterRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.meterTrack {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.meterFill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 214, 122, 0.88), rgba(110, 236, 210, 0.9));
+}
+
+.meterValue {
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.seatRail {
+  display: grid;
+  gap: 10px;
+}
+
+.seatRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(169, 204, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.seatMask {
+  width: 48px;
+  height: 48px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: #08111a;
+  font-family: var(--font-display), serif;
+  font-size: 0.98rem;
+  background:
+    radial-gradient(circle at 32% 32%, rgba(255, 255, 255, 0.62), transparent 24%),
+    linear-gradient(160deg, var(--seat-accent), color-mix(in srgb, var(--seat-accent) 54%, #102131));
+}
+
+.seatHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.seatState {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.seatScore {
+  min-width: 120px;
+  text-align: right;
+}
+
+.seatScore span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.chamberRail {
+  display: grid;
+  gap: 10px;
+}
+
+.chamberEntry {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chamberEntry:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.signalGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.signalCard,
+.premiseColumn,
+.controlCard,
+.railCard,
+.finalBody {
+  padding: 18px;
+}
+
+.signalCard {
+  display: grid;
+  gap: 10px;
+}
+
+.signalCard strong {
+  font-size: 1.18rem;
+}
+
+.supportSection,
+.detailSection,
+.finalSection {
+  display: grid;
+  gap: 18px;
+}
+
+.sectionHead {
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+}
+
+.sectionHead h2 {
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.98;
+}
+
+.premiseGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.premiseColumn {
+  display: grid;
+  gap: 10px;
+}
+
+.premiseColumn h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.detailGrid {
+  grid-template-columns: 1.1fr 0.95fr 0.95fr;
+}
+
+.controlCard {
+  display: grid;
+  gap: 12px;
+}
+
+.controlCard strong {
+  font-size: 1.16rem;
+}
+
+.controlCard ol,
+.railCard ul {
+  padding-left: 18px;
+}
+
+.controlCard li + li,
+.railCard li + li {
+  margin-top: 10px;
+}
+
+.finalBody {
+  display: grid;
+  gap: 18px;
+}
+
+.proofLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.supportPanel {
+  border-radius: 22px;
+  border: 1px solid rgba(169, 204, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 18px;
+}
+
+@media (max-width: 1080px) {
+  .hero,
+  .detailGrid,
+  .premiseGrid,
+  .signalGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroMeta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    padding: 24px;
+  }
+
+  .heroMeta,
+  .chamberHero,
+  .seatRow,
+  .proofLine {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .seatScore {
+    min-width: 0;
+    text-align: left;
+  }
+}

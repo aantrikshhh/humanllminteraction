@@ -19,7 +19,7 @@ import type {
 
 import { PACT_TOTAL_ROUNDS } from "./types";
 
-const PAYOFF_MATRIX: Record<
+export const PACT_PAYOFF_MATRIX: Record<
   PactOutcomeCode,
   {
     seatA: number;
@@ -248,10 +248,10 @@ export function projectPactPublicState(state: PactPrivateState): PactPublicState
     seats,
     history: state.history,
     payoffLegend: [
-      { outcome: "CC", label: PAYOFF_MATRIX.CC.label, seatA: 300, seatB: 300 },
-      { outcome: "CB", label: PAYOFF_MATRIX.CB.label, seatA: 0, seatB: 500 },
-      { outcome: "BC", label: PAYOFF_MATRIX.BC.label, seatA: 500, seatB: 0 },
-      { outcome: "BB", label: PAYOFF_MATRIX.BB.label, seatA: 100, seatB: 100 },
+      { outcome: "CC", label: PACT_PAYOFF_MATRIX.CC.label, seatA: 300, seatB: 300 },
+      { outcome: "CB", label: PACT_PAYOFF_MATRIX.CB.label, seatA: 0, seatB: 500 },
+      { outcome: "BC", label: PACT_PAYOFF_MATRIX.BC.label, seatA: 500, seatB: 0 },
+      { outcome: "BB", label: PACT_PAYOFF_MATRIX.BB.label, seatA: 100, seatB: 100 },
     ],
     strategySummary: isComplete ? buildStrategySummary(state) : undefined,
     status: isComplete
@@ -328,7 +328,7 @@ export function applyPactAction(
   }
 
   const outcomeCode = resolveOutcomeCode(seatAChoice, seatBChoice);
-  const payoff = PAYOFF_MATRIX[outcomeCode];
+  const payoff = PACT_PAYOFF_MATRIX[outcomeCode];
   const scoreBySeatId = {
     ...state.scoreBySeatId,
     [seatAId]: state.scoreBySeatId[seatAId] + payoff.seatA,

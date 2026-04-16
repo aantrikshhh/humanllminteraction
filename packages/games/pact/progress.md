@@ -5,6 +5,11 @@ Original prompt: You are responsible for the Pact game slice in /Users/aant/repo
 - Added strategy-summary and behavioral metrics for cooperation, forgiveness, retaliation, and endgame betrayal.
 - Added a thin Next.js explainer route with a sample partially-played match.
 - Added a pact smoke simulation for a 15-round grim-trigger versus opportunist scenario.
+- Rebuilt the standalone Pact route as a stronger demo surface with reducer-driven samples, live-room CTA handling, and clearer protocol storytelling.
+- Added pact strategy regression simulations covering always-cooperate versus always-betray, grim-trigger punishment, and forgiving-cooperator behavior.
+- Exported Pact choice/phase/outcome types and payoff matrix for downstream consumers without local type duplication.
+- Added a reducer-driven standalone Pact simulator so the route now demonstrates a full hidden-commitment loop, not just static narrative panels.
+- Added pact regression coverage for hidden commitment rails, duplicate-commit rejection, and terminal strategy consistency.
 
 TODO
 - Wire `pactModule` into the room runtime once the room owner is ready for a second live game.

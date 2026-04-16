@@ -50,6 +50,7 @@ export interface SplitPendingOffer {
   amountToResponder: number;
   amountToProposer: number;
   offerShare: number;
+  fairnessBand: SplitFairnessBand;
   submittedAt: string;
 }
 
@@ -60,11 +61,18 @@ export interface SplitRoundRecord {
   amountToResponder: number;
   amountToProposer: number;
   offerShare: number;
+  fairnessBand: SplitFairnessBand;
   decision: "accepted" | "rejected";
   proposerDelta: number;
   responderDelta: number;
   resolvedAt: string;
 }
+
+export type SplitFairnessBand =
+  | "predatory"
+  | "tense"
+  | "fair"
+  | "generous";
 
 export interface SplitPrivateState {
   seed: string;
@@ -96,6 +104,7 @@ export interface SplitPublicHistoryEntry {
   responderSeatId: SeatId;
   amountToResponder: number;
   offerShare: number;
+  fairnessBand: SplitFairnessBand;
   decision: "accepted" | "rejected";
   proposerDelta: number;
   responderDelta: number;
@@ -113,10 +122,15 @@ export interface SplitPublicState {
     amountToResponder: number;
     amountToProposer: number;
     offerShare: number;
+    fairnessBand: SplitFairnessBand;
   };
   viewerRole?: "proposer" | "responder";
   viewerCanAct: boolean;
   tensionIndex: number;
+  agreementRate: number;
+  averageOfferShare: number;
+  lowOfferShareThreshold: number;
+  fairnessPulse: SplitFairnessBand;
   narrative: string;
   seats: SplitSeatPublicView[];
   history: SplitPublicHistoryEntry[];
@@ -141,6 +155,8 @@ export type SplitBehavioralOutput = BehavioralOutput;
 export const SPLIT_POT_TOTAL = 100;
 export const SPLIT_MAX_ROUNDS = 4;
 export const SPLIT_LOW_OFFER_SHARE = 0.3;
+export const SPLIT_TENSE_OFFER_SHARE = 0.4;
+export const SPLIT_FAIR_OFFER_SHARE = 0.55;
 
 export function createSplitConfig(): SplitConfig {
   return {

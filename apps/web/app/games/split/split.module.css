@@ -1,0 +1,466 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(82, 213, 255, 0.13), transparent 28%),
+    radial-gradient(circle at 80% 18%, rgba(255, 190, 120, 0.12), transparent 22%),
+    linear-gradient(180deg, #08111c 0%, #04080f 62%, #020409 100%);
+}
+
+.stack {
+  display: grid;
+  gap: 2rem;
+  padding-block: 1.5rem 4rem;
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.95fr);
+  gap: 1.5rem;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  border: 1px solid rgba(151, 208, 255, 0.12);
+  border-radius: 2rem;
+  background:
+    linear-gradient(135deg, rgba(7, 17, 28, 0.98), rgba(4, 10, 19, 0.94)),
+    rgba(5, 10, 18, 0.95);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 1rem 50% 1rem auto;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(82, 213, 255, 0), rgba(82, 213, 255, 0.8), rgba(255, 175, 80, 0.6), rgba(82, 213, 255, 0));
+  box-shadow: 0 0 22px rgba(82, 213, 255, 0.45);
+}
+
+.heroCopy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.eyebrow,
+.sectionKicker {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(151, 208, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(214, 230, 255, 0.72);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.headline {
+  margin: 0.25rem 0 0;
+  max-width: 11ch;
+  font-size: clamp(3.2rem, 8vw, 6.1rem);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+}
+
+.lede,
+.sectionCopy,
+.metaCard span,
+.signalCard p,
+.premiseColumn p,
+.historyCard p,
+.railCard li,
+.statusCard p,
+.proofCard p {
+  color: rgba(219, 228, 244, 0.76);
+}
+
+.lede {
+  max-width: 44rem;
+  margin: 0;
+  font-size: 1.03rem;
+  line-height: 1.78;
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.heroMeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.metaCard,
+.statusCard,
+.signalCard,
+.premiseColumn,
+.controlCard,
+.railCard,
+.historyCard,
+.proofCard {
+  border: 1px solid rgba(151, 208, 255, 0.12);
+  border-radius: 1.35rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.metaCard {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+}
+
+.metaCard strong {
+  font-size: 0.97rem;
+  line-height: 1.45;
+}
+
+.heroStage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.statusCard {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+}
+
+.statusCard span,
+.seatHeader span,
+.signalCard span,
+.controlCard span,
+.railCard span,
+.proofCard span {
+  color: rgba(173, 191, 215, 0.72);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+}
+
+.statusCard strong {
+  font-size: 1.35rem;
+}
+
+.statusCallout {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.stageGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.seatCard {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(151, 208, 255, 0.12);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--seat-accent) 16%, transparent), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.02);
+}
+
+.seatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.seatMask {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--seat-accent) 55%, rgba(255, 255, 255, 0.2));
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(243, 247, 255, 0.95);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rolePill {
+  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(243, 247, 255, 0.85);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.seatName {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.seatMeta {
+  margin: 0.2rem 0 0;
+  color: rgba(214, 230, 255, 0.68);
+  font-size: 0.92rem;
+}
+
+.seatScore {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.fairnessRail {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.fairnessRail strong {
+  font-size: 0.95rem;
+}
+
+.fairnessMeter {
+  position: relative;
+  overflow: hidden;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.fairnessMeter span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff8d6c, #f8d277 44%, #7bffc8 100%);
+}
+
+.signalGrid,
+.premiseGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.signalCard {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem 1.05rem;
+}
+
+.signalCard strong {
+  font-size: 1.5rem;
+  text-transform: capitalize;
+}
+
+.supportSection,
+.detailSection,
+.finalSection {
+  display: grid;
+  gap: 1.2rem;
+  padding: clamp(1.35rem, 2.5vw, 2rem);
+  border: 1px solid rgba(151, 208, 255, 0.12);
+  border-radius: 1.85rem;
+  background: rgba(3, 9, 17, 0.86);
+}
+
+.sectionHead {
+  display: grid;
+  gap: 0.7rem;
+  max-width: 52rem;
+}
+
+.sectionHead h2 {
+  margin: 0;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.sectionCopy {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.premiseColumn {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1.2rem;
+}
+
+.premiseColumn h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 1rem;
+}
+
+.historyPanel,
+.infoPanel {
+  display: grid;
+  gap: 1rem;
+}
+
+.historyStack {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.historyCard {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem;
+}
+
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.historyDecision {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.historyMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.historyMetric {
+  padding: 0.85rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(151, 208, 255, 0.1);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.historyMetric span {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: rgba(173, 191, 215, 0.72);
+  font-size: 0.8rem;
+}
+
+.controlCard,
+.railCard,
+.proofCard {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.05rem;
+}
+
+.controlCard ol,
+.railCard ul {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  line-height: 1.65;
+}
+
+.railCard ul {
+  padding-left: 1rem;
+}
+
+.railCard li {
+  margin: 0;
+}
+
+.finalBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+}
+
+.proofLine {
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  gap: 0.5rem 0.9rem;
+  align-items: center;
+  color: rgba(173, 191, 215, 0.72);
+}
+
+.proofLine strong {
+  color: rgba(244, 247, 255, 0.96);
+}
+
+.bandPredatory {
+  color: #ff9d80;
+}
+
+.bandTense {
+  color: #ffd778;
+}
+
+.bandFair {
+  color: #91f0ff;
+}
+
+.bandGenerous {
+  color: #9cf8c1;
+}
+
+@media (max-width: 1080px) {
+  .hero,
+  .detailGrid,
+  .finalBody {
+    grid-template-columns: 1fr;
+  }
+
+  .hero::after {
+    inset: auto 1rem 50% 1rem;
+    width: auto;
+    height: 1px;
+  }
+
+  .signalGrid,
+  .premiseGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .stack {
+    gap: 1.25rem;
+    padding-block: 1rem 3rem;
+  }
+
+  .heroMeta,
+  .signalGrid,
+  .premiseGrid,
+  .historyMetrics,
+  .proofLine {
+    grid-template-columns: 1fr;
+  }
+
+  .hero,
+  .supportSection,
+  .detailSection,
+  .finalSection {
+    padding: 1.1rem;
+    border-radius: 1.4rem;
+  }
+
+  .ctaRow {
+    display: grid;
+  }
+}

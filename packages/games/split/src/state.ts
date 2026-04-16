@@ -10,13 +10,16 @@ import type {
 import {
   type SplitAction,
   type SplitActionEnvelope,
+  type SplitFairnessBand,
   type SplitPendingOffer,
   type SplitPrivateState,
   type SplitPublicState,
   type SplitRoundRecord,
   type SplitSeatPublicView,
   type SplitSeatState,
+  SPLIT_FAIR_OFFER_SHARE,
   SPLIT_LOW_OFFER_SHARE,
+  SPLIT_TENSE_OFFER_SHARE,
   createSplitConfig,
 } from "./types";
 
@@ -135,6 +138,19 @@ export function projectSplitPublicState(
   viewerSeatId?: SeatId,
 ): SplitPublicState {
   const leaderScore = Math.max(...state.seats.map((seat) => seat.cumulativeScore));
+  const averageOfferShare =
+    state.history.length === 0
+      ? state.pendingOffer?.offerShare ?? 0
+      : state.history.reduce((total, round) => total + round.offerShare, 0) /
+        state.history.length;
+  const agreementRate =
+    state.history.length === 0
+      ? 0
+      : state.history.filter((round) => round.decision === "accepted").length /
+        state.history.length;
+  const fairnessPulse = state.pendingOffer
+    ? state.pendingOffer.fairnessBand
+    : state.history.at(-1)?.fairnessBand ?? "fair";
   const viewerRole =
     viewerSeatId === state.proposerSeatId
       ? "proposer"
@@ -170,6 +186,7 @@ export function projectSplitPublicState(
           amountToResponder: state.pendingOffer.amountToResponder,
           amountToProposer: state.pendingOffer.amountToProposer,
           offerShare: state.pendingOffer.offerShare,
+          fairnessBand: state.pendingOffer.fairnessBand,
         }
       : undefined,
     viewerRole,
@@ -177,6 +194,10 @@ export function projectSplitPublicState(
     tensionIndex: state.pendingOffer
       ? Math.round((0.5 - state.pendingOffer.offerShare) * 100)
       : 0,
+    agreementRate: Number(agreementRate.toFixed(2)),
+    averageOfferShare: Number(averageOfferShare.toFixed(2)),
+    lowOfferShareThreshold: SPLIT_LOW_OFFER_SHARE,
+    fairnessPulse,
     narrative,
     seats: state.seats.map((seat) => ({
       seatId: seat.seatId,
@@ -198,11 +219,28 @@ export function projectSplitPublicState(
       responderSeatId: entry.responderSeatId,
       amountToResponder: entry.amountToResponder,
       offerShare: entry.offerShare,
+      fairnessBand: entry.fairnessBand,
       decision: entry.decision,
       proposerDelta: entry.proposerDelta,
       responderDelta: entry.responderDelta,
     })),
   };
+}
+
+export function classifySplitOfferShare(offerShare: number): SplitFairnessBand {
+  if (offerShare <= SPLIT_LOW_OFFER_SHARE) {
+    return "predatory";
+  }
+
+  if (offerShare < SPLIT_TENSE_OFFER_SHARE) {
+    return "tense";
+  }
+
+  if (offerShare <= SPLIT_FAIR_OFFER_SHARE) {
+    return "fair";
+  }
+
+  return "generous";
 }
 
 export function resolveSplitWinners(state: SplitPrivateState): SeatId[] {
@@ -324,6 +362,7 @@ function buildResolvedRound(
     amountToResponder: pendingOffer.amountToResponder,
     amountToProposer: pendingOffer.amountToProposer,
     offerShare: pendingOffer.offerShare,
+    fairnessBand: pendingOffer.fairnessBand,
     decision,
     proposerDelta,
     responderDelta,
@@ -354,6 +393,9 @@ export function applySplitAction(
       amountToResponder,
       amountToProposer: state.config.potTotal - amountToResponder,
       offerShare: amountToResponder / state.config.potTotal,
+      fairnessBand: classifySplitOfferShare(
+        amountToResponder / state.config.potTotal,
+      ),
       submittedAt: envelope.submittedAt,
     };
 

@@ -9,14 +9,17 @@ import type {
 } from "./types";
 
 import {
+  SPLIT_FAIR_OFFER_SHARE,
   SPLIT_LOW_OFFER_SHARE,
   SPLIT_MAX_ROUNDS,
   SPLIT_POT_TOTAL,
+  SPLIT_TENSE_OFFER_SHARE,
   createSplitConfig,
 } from "./types";
 
 import {
   applySplitAction,
+  classifySplitOfferShare,
   createSplitState,
   finalizeSplitMatch,
   isSplitAction,
@@ -58,10 +61,13 @@ export const splitModule: SplitGameModule = {
 };
 
 export {
+  SPLIT_FAIR_OFFER_SHARE,
   SPLIT_LOW_OFFER_SHARE,
   SPLIT_MAX_ROUNDS,
   SPLIT_POT_TOTAL,
+  SPLIT_TENSE_OFFER_SHARE,
   applySplitAction,
+  classifySplitOfferShare,
   createSplitConfig,
   createSplitState,
   finalizeSplitMatch,

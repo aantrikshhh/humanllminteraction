@@ -9,3 +9,4 @@ Implemented slice:
 - public projection that hides seat backing type and other players' live contributions
 - deterministic replay events for private contributions, pool reveal, accusations, and round resolution
 - match finalization with cumulative scores and behavioral metrics
+- additive behavioral metrics for contribution quality, pool totals, zero-contribution rate, and accusation accuracy

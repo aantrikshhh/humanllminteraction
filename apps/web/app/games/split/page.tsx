@@ -1,368 +1,303 @@
-import type { SeatAssignment } from "@arena/contracts";
+import Link from "next/link";
+
 import { splitBrief, splitModule } from "@arena/game-split";
 
-function makeSeat(
-  seatId: string,
-  displayName: string,
-  avatarId: string,
-): SeatAssignment {
-  return {
-    publicSeat: {
-      seatId,
-      displayName,
-      avatarId,
-      isConnected: true,
-      isReady: true,
-    },
-    privateSeat: {
-      seatId,
-      backingType: "llm",
-    },
-  };
+import { getRoomsSnapshot } from "../../../lib/service-data";
+
+import {
+  contentPlan,
+  findLiveSplitRoom,
+  getFairnessCopy,
+  getFairnessLabel,
+  getSplitStatus,
+  hiddenInfoRail,
+  interactionThesis,
+  premiseColumns,
+  publicInfoRail,
+  roundTimeline,
+  sampleState,
+  splitSignals,
+  visualThesis,
+} from "./data";
+import styles from "./split.module.css";
+
+export const dynamic = "force-dynamic";
+
+function getSeatAccent(avatarId: string) {
+  if (avatarId.includes("amber")) {
+    return "#ffc178";
+  }
+
+  if (avatarId.includes("teal")) {
+    return "#6bf2de";
+  }
+
+  return "#97d0ff";
 }
 
-function buildSampleState() {
-  const seats = [
-    makeSeat("seat_a", "Seat A", "amber-mask"),
-    makeSeat("seat_b", "Seat B", "teal-mask"),
-  ];
-
-  let state = splitModule.createInitialState("split-demo-seed", seats);
-
-  state = splitModule.reduce(
-    {
-      seed: "split-demo-seed",
-      nowIso: "2026-04-16T10:00:00.000Z",
-      state,
-      seats,
-    },
-    {
-      seatId: "seat_a",
-      submittedAt: "2026-04-16T10:00:00.000Z",
-      action: { type: "split.offer", amount: 35 },
-    },
-  ).nextState;
-
-  state = splitModule.reduce(
-    {
-      seed: "split-demo-seed",
-      nowIso: "2026-04-16T10:00:01.000Z",
-      state,
-      seats,
-    },
-    {
-      seatId: "seat_b",
-      submittedAt: "2026-04-16T10:00:01.000Z",
-      action: { type: "split.accept" },
-    },
-  ).nextState;
-
-  state = splitModule.reduce(
-    {
-      seed: "split-demo-seed",
-      nowIso: "2026-04-16T10:00:02.000Z",
-      state,
-      seats,
-    },
-    {
-      seatId: "seat_b",
-      submittedAt: "2026-04-16T10:00:02.000Z",
-      action: { type: "split.offer", amount: 22 },
-    },
-  ).nextState;
-
-  return splitModule.projectPublicState(state, "seat_a");
+function getBandClassName(fairnessBand: string) {
+  switch (fairnessBand) {
+    case "predatory":
+      return styles.bandPredatory;
+    case "tense":
+      return styles.bandTense;
+    case "fair":
+      return styles.bandFair;
+    case "generous":
+      return styles.bandGenerous;
+    default:
+      return "";
+  }
 }
 
-const sample = buildSampleState();
+export default async function SplitPage() {
+  const roomsSnapshot = await getRoomsSnapshot();
+  const liveSplitRoom = findLiveSplitRoom(roomsSnapshot.data);
+  const splitStatus = getSplitStatus(liveSplitRoom);
+  const pendingOffer = sampleState.pendingOffer;
 
-const shellStyle: React.CSSProperties = {
-  width: "min(1120px, calc(100vw - 40px))",
-  margin: "0 auto",
-  display: "grid",
-  gap: "24px",
-};
-
-const panelStyle: React.CSSProperties = {
-  border: "1px solid rgba(168, 203, 255, 0.14)",
-  borderRadius: 24,
-  background:
-    "linear-gradient(180deg, rgba(10, 21, 36, 0.94), rgba(6, 11, 19, 0.96))",
-  boxShadow: "0 24px 80px rgba(0, 0, 0, 0.32)",
-  padding: 24,
-};
-
-const metricStyle: React.CSSProperties = {
-  border: "1px solid rgba(168, 203, 255, 0.12)",
-  borderRadius: 18,
-  padding: 16,
-  background: "rgba(255, 255, 255, 0.02)",
-};
-
-export default function SplitPage() {
   return (
-    <main className="app-shell">
-      <div style={shellStyle}>
-        <section
-          style={{
-            ...panelStyle,
-            display: "grid",
-            gap: 20,
-            background:
-              "radial-gradient(circle at top right, rgba(108, 242, 200, 0.12), transparent 24%), linear-gradient(180deg, rgba(10, 21, 36, 0.95), rgba(6, 11, 19, 0.98))",
-          }}
-        >
-          <div className="stack">
-            <span className="eyebrow">Game Slice</span>
-            <h1
-              style={{
-                margin: 0,
-                fontFamily: "var(--font-display), serif",
-                fontSize: "clamp(2.8rem, 7vw, 5.5rem)",
-                lineHeight: 0.94,
-                letterSpacing: "-0.04em",
-              }}
-            >
-              {splitBrief.title}
-            </h1>
-            <p className="muted" style={{ maxWidth: 760, fontSize: "1.05rem", lineHeight: 1.7 }}>
-              {splitBrief.summary} One seat proposes the cut, the other can accept
-              or burn the whole pot. Roles alternate, scores persist, and the room
-              never reveals who is human.
+    <main className={`app-shell ${styles.page}`}>
+      <div className={`shell ${styles.stack}`}>
+        <section className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <div>
+              <p className={styles.eyebrow}>Game Slice / Hidden-seat ultimatum chamber</p>
+              <h1 className={styles.headline}>Mercy is expensive when every cut gets remembered.</h1>
+            </div>
+
+            <p className={styles.lede}>
+              {splitBrief.summary} The proposer chooses the split. The responder can
+              take the deal or torch the whole round. Roles alternate, scores
+              persist, and the room never discloses which seat is human. That
+              makes Split one of the cleanest ARENA slices for measuring fairness
+              thresholds under hidden identity.
             </p>
-          </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: 14,
-            }}
-          >
-            <div style={metricStyle}>
-              <div className="muted">Pot Per Round</div>
-              <strong style={{ fontSize: "1.65rem" }}>{sample.potTotal}</strong>
-            </div>
-            <div style={metricStyle}>
-              <div className="muted">Current Round</div>
-              <strong style={{ fontSize: "1.65rem" }}>
-                {sample.currentRound} / {sample.maxRounds}
-              </strong>
-            </div>
-            <div style={metricStyle}>
-              <div className="muted">Viewer Role</div>
-              <strong style={{ fontSize: "1.65rem", textTransform: "capitalize" }}>
-                {sample.viewerRole ?? "observer"}
-              </strong>
-            </div>
-            <div style={metricStyle}>
-              <div className="muted">Tension Index</div>
-              <strong style={{ fontSize: "1.65rem" }}>{sample.tensionIndex}</strong>
-            </div>
-          </div>
-        </section>
-
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.25fr) minmax(320px, 0.9fr)",
-            gap: 24,
-          }}
-        >
-          <div style={{ ...panelStyle, display: "grid", gap: 16 }}>
-            <div className="stack">
-              <h2 style={{ margin: 0 }}>Live Public State</h2>
-              <p className="muted" style={{ margin: 0 }}>
-                This route is intentionally transport-agnostic. It renders the exact
-                public-state shape that a room server can stream later.
-              </p>
+            <div className={styles.ctaRow}>
+              <Link className="button primary" href={splitStatus.ctaHref}>
+                {splitStatus.ctaLabel}
+              </Link>
+              <Link className="button" href="/lobby">
+                Open operator lobby
+              </Link>
             </div>
 
-            <div
-              style={{
-                border: "1px solid rgba(168, 203, 255, 0.1)",
-                borderRadius: 20,
-                padding: 18,
-                background: "rgba(255, 255, 255, 0.02)",
-              }}
-            >
-              <div className="muted" style={{ marginBottom: 10 }}>
-                Narrative
+            <div className={styles.heroMeta}>
+              <div className={styles.metaCard}>
+                <span>Visual thesis</span>
+                <strong>{visualThesis}</strong>
               </div>
-              <strong style={{ fontSize: "1.1rem" }}>{sample.narrative}</strong>
-              {sample.pendingOffer ? (
-                <div
-                  style={{
-                    marginTop: 18,
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: 12,
-                  }}
-                >
-                  <div style={metricStyle}>
-                    <div className="muted">Responder Take</div>
-                    <strong style={{ fontSize: "1.6rem" }}>
-                      {sample.pendingOffer.amountToResponder}
-                    </strong>
-                  </div>
-                  <div style={metricStyle}>
-                    <div className="muted">Proposer Keep</div>
-                    <strong style={{ fontSize: "1.6rem" }}>
-                      {sample.pendingOffer.amountToProposer}
-                    </strong>
-                  </div>
-                </div>
-              ) : null}
+              <div className={styles.metaCard}>
+                <span>Public rule</span>
+                <strong>Only offers, round outcomes, seat scores, and the active role cross the wire.</strong>
+              </div>
+              <div className={styles.metaCard}>
+                <span>Content plan</span>
+                <strong>{contentPlan[0]}</strong>
+              </div>
+              <div className={styles.metaCard}>
+                <span>Interaction thesis</span>
+                <strong>{interactionThesis[0]}</strong>
+              </div>
+            </div>
+          </div>
+
+          <aside className={styles.heroStage}>
+            <div className={styles.statusCard}>
+              <span>Live room status</span>
+              <strong>{splitStatus.label}</strong>
+              <p className={styles.statusCallout}>{splitStatus.detail}</p>
             </div>
 
-            <div style={{ display: "grid", gap: 12 }}>
-              {sample.seats.map((seat) => (
+            <div className={styles.stageGrid}>
+              {sampleState.seats.map((seat) => (
                 <article
+                  className={styles.seatCard}
                   key={seat.seatId}
-                  style={{
-                    border: "1px solid rgba(168, 203, 255, 0.12)",
-                    borderRadius: 20,
-                    padding: 18,
-                    background:
-                      seat.role === "proposer"
-                        ? "linear-gradient(135deg, rgba(82, 213, 255, 0.11), rgba(255, 255, 255, 0.02))"
-                        : "linear-gradient(135deg, rgba(108, 242, 200, 0.12), rgba(255, 255, 255, 0.02))",
-                    display: "grid",
-                    gap: 10,
-                  }}
+                  style={{ "--seat-accent": getSeatAccent(seat.avatarId) } as React.CSSProperties}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 12,
-                      alignItems: "center",
-                    }}
-                  >
-                    <div>
-                      <strong style={{ display: "block", fontSize: "1.1rem" }}>
-                        {seat.displayName}
-                      </strong>
-                      <span className="muted" style={{ fontSize: ".92rem" }}>
-                        {seat.seatId}
-                      </span>
-                    </div>
-                    <span
-                      style={{
-                        border: "1px solid rgba(108, 242, 200, 0.24)",
-                        borderRadius: 999,
-                        padding: "8px 12px",
-                        textTransform: "uppercase",
-                        letterSpacing: ".08em",
-                        fontSize: ".75rem",
-                      }}
-                    >
-                      {seat.role}
-                    </span>
+                  <div className={styles.seatHeader}>
+                    <div className={styles.seatMask}>{seat.displayName.replace("Seat ", "S")}</div>
+                    <span className={styles.rolePill}>{seat.role}</span>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                      gap: 10,
-                    }}
-                  >
-                    <div style={metricStyle}>
-                      <div className="muted">Score</div>
-                      <strong>{seat.cumulativeScore}</strong>
-                    </div>
-                    <div style={metricStyle}>
-                      <div className="muted">Accepted</div>
-                      <strong>{seat.acceptedCount}</strong>
-                    </div>
-                    <div style={metricStyle}>
-                      <div className="muted">Rejected</div>
-                      <strong>{seat.rejectedCount}</strong>
+                  <div>
+                    <h2 className={styles.seatName}>{seat.displayName}</h2>
+                    <p className={styles.seatMeta}>
+                      Score {seat.cumulativeScore}. Accepted {seat.acceptedCount}. Rejected{" "}
+                      {seat.rejectedCount}.
+                    </p>
+                  </div>
+
+                  <div className={styles.fairnessRail}>
+                    <span>Current standing</span>
+                    <strong className={styles.seatScore}>{seat.cumulativeScore}</strong>
+                    <div className={styles.fairnessMeter}>
+                      <span style={{ width: `${Math.max(16, sampleState.averageOfferShare * 100)}%` }} />
                     </div>
                   </div>
                 </article>
               ))}
             </div>
+          </aside>
+        </section>
+
+        <section className={styles.signalGrid}>
+          {splitSignals.map((signal) => (
+            <article className={styles.signalCard} key={signal.label}>
+              <span>{signal.label}</span>
+              <strong>{signal.value}</strong>
+              <p>{signal.detail}</p>
+            </article>
+          ))}
+        </section>
+
+        <section className={styles.supportSection}>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionKicker}>Why this game works</span>
+            <h2>Split makes fairness legible before the room can guess who is synthetic.</h2>
+            <p className={styles.sectionCopy}>
+              The surface area is intentionally small: one proposer, one responder,
+              one number, one yes-or-burn decision. Because the public rule is so
+              compact, the behavioral signal is unusually crisp. You can watch
+              generosity, retaliation, or exploitation emerge round by round
+              without exposing identity metadata.
+            </p>
           </div>
 
-          <div style={{ ...panelStyle, display: "grid", gap: 16 }}>
-            <div className="stack">
-              <h2 style={{ margin: 0 }}>History</h2>
-              <p className="muted" style={{ margin: 0 }}>
-                Accepted and rejected rounds remain visible. Seat identity stays
-                masked at the transport level, but strategic behavior still reads
-                clearly to observers.
-              </p>
+          <div className={styles.premiseGrid}>
+            {premiseColumns.map((column) => (
+              <article className={styles.premiseColumn} key={column.title}>
+                <h3>{column.title}</h3>
+                <p>{column.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.detailSection}>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionKicker}>Sample public room state</span>
+            <h2>The room only needs a few facts to feel the pressure.</h2>
+            <p className={styles.sectionCopy}>
+              Pot: {sampleState.potTotal}. Max rounds: {sampleState.maxRounds}. Turn
+              window: {Math.floor(splitModule.timers.actionMs / 1000)} seconds.
+              Current round: {sampleState.currentRound}. The latest fairness pulse is{" "}
+              <strong className={getBandClassName(sampleState.fairnessPulse)}>
+                {getFairnessLabel(sampleState.fairnessPulse)}
+              </strong>
+              .
+            </p>
+          </div>
+
+          <div className={styles.detailGrid}>
+            <div className={styles.historyPanel}>
+              <article className={styles.controlCard}>
+                <span>Pending offer</span>
+                <strong>
+                  {pendingOffer
+                    ? `${pendingOffer.amountToResponder}/${sampleState.potTotal} to the responder`
+                    : "No active offer"}
+                </strong>
+                <p>
+                  {pendingOffer
+                    ? getFairnessCopy(pendingOffer.offerShare)
+                    : "All rounds are settled. Open a new room to generate fresh pressure."}
+                </p>
+              </article>
+
+              <div className={styles.historyStack}>
+                {roundTimeline.map((entry) => (
+                  <article className={styles.historyCard} key={`${entry.label}-${entry.decision}`}>
+                    <div className={styles.historyHeader}>
+                      <strong>{entry.label}</strong>
+                      <span
+                        className={`${styles.historyDecision} ${getBandClassName(entry.fairnessBand)}`}
+                      >
+                        {entry.decision}
+                      </span>
+                    </div>
+
+                    <p>{entry.detail}</p>
+
+                    <div className={styles.historyMetrics}>
+                      <div className={styles.historyMetric}>
+                        <span>Fairness band</span>
+                        <strong className={getBandClassName(entry.fairnessBand)}>
+                          {getFairnessLabel(entry.fairnessBand)}
+                        </strong>
+                      </div>
+                      <div className={styles.historyMetric}>
+                        <span>Status</span>
+                        <strong style={{ textTransform: "capitalize" }}>{entry.decision}</strong>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
 
-            <div style={{ display: "grid", gap: 12 }}>
-              {sample.history.map((entry) => (
-                <div
-                  key={entry.roundNumber}
-                  style={{
-                    border: "1px solid rgba(168, 203, 255, 0.12)",
-                    borderRadius: 18,
-                    padding: 16,
-                    background: "rgba(255, 255, 255, 0.02)",
-                    display: "grid",
-                    gap: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 12,
-                      alignItems: "center",
-                    }}
-                  >
-                    <strong>Round {entry.roundNumber}</strong>
-                    <span
-                      style={{
-                        color:
-                          entry.decision === "accepted"
-                            ? "var(--accent)"
-                            : "var(--danger)",
-                        textTransform: "uppercase",
-                        letterSpacing: ".08em",
-                        fontSize: ".75rem",
-                      }}
-                    >
-                      {entry.decision}
-                    </span>
-                  </div>
-                  <div className="muted" style={{ fontSize: ".95rem" }}>
-                    {entry.proposerSeatId} offered {entry.amountToResponder} to{" "}
-                    {entry.responderSeatId} ({Math.round(entry.offerShare * 100)}% of
-                    the pot).
-                  </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                      gap: 10,
-                    }}
-                  >
-                    <div style={metricStyle}>
-                      <div className="muted">Proposer Delta</div>
-                      <strong>{entry.proposerDelta}</strong>
-                    </div>
-                    <div style={metricStyle}>
-                      <div className="muted">Responder Delta</div>
-                      <strong>{entry.responderDelta}</strong>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className={styles.infoPanel}>
+              <article className={styles.railCard}>
+                <span>What the room shows publicly</span>
+                <ul>
+                  {publicInfoRail.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </article>
+
+              <article className={styles.railCard}>
+                <span>What stays server-side</span>
+                <ul>
+                  {hiddenInfoRail.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </article>
+
+              <article className={styles.proofCard}>
+                <span>Current sample pulse</span>
+                <strong className={getBandClassName(sampleState.fairnessPulse)}>
+                  {getFairnessLabel(sampleState.fairnessPulse)}
+                </strong>
+                <p>
+                  Average offer share sits at {Math.round(sampleState.averageOfferShare * 100)}%
+                  while the agreement rate is {Math.round(sampleState.agreementRate * 100)}%. The
+                  room can interpret that behavior without learning anything about seat backing.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.finalSection}>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionKicker}>Flagship CTA</span>
+            <h2>Use Split when you want a fast, legible benchmark for fairness and punishment.</h2>
+            <p className={styles.sectionCopy}>
+              Seats: {splitBrief.playerCountLabel}. Round cap: {sampleState.maxRounds}. Live room
+              routing comes from the same lobby used by the broader ARENA demo, so the page can
+              brief the game and then hand off directly to the room surface.
+            </p>
+          </div>
+
+          <div className={styles.finalBody}>
+            <div className={styles.proofLine}>
+              <span>Rooms source</span>
+              <strong>{roomsSnapshot.source}</strong>
+              <span>Live room</span>
+              <strong>{liveSplitRoom ? liveSplitRoom.roomId.slice(0, 12) : "not created yet"}</strong>
             </div>
 
-            <div style={{ ...metricStyle, lineHeight: 1.7 }}>
-              <strong>Implementation note</strong>
-              <p className="muted" style={{ margin: "8px 0 0" }}>
-                The public state intentionally carries role, offer, score, and history
-                only. Human-vs-LLM backing remains private metadata on the room server.
-              </p>
+            <div className={styles.ctaRow}>
+              <Link className="button primary" href={splitStatus.ctaHref}>
+                {splitStatus.ctaLabel}
+              </Link>
+              <Link className="button" href="/results">
+                Open result shells
+              </Link>
             </div>
           </div>
         </section>
