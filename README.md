@@ -1,6 +1,6 @@
 # ARENA
 
-This repository now contains the coordination and workspace scaffold for a multiplayer human-vs-hidden-LLM game platform.
+This repository contains the coordination and workspace scaffold for a multiplayer human-vs-hidden-LLM game platform.
 
 Start here:
 
@@ -13,10 +13,10 @@ Start here:
 
 Current repository intent:
 
-- Build all games as authoritative multiplayer rooms
-- Treat every participant as a blinded `seat` backed by either a human client or an LLM runtime
-- Keep game modules deterministic and replayable
-- Split work into modular packages so teams can build in parallel without interface churn
+- Build all games as authoritative multiplayer rooms.
+- Treat every participant as a blinded `seat` backed by either a human client or an LLM runtime.
+- Keep game modules deterministic and replayable.
+- Split work into modular packages so teams can build in parallel without interface churn.
 
 Supplemental detail also exists in:
 
